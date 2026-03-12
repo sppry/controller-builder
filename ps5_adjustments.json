@@ -1,0 +1,15 @@
+{
+  "trimAdjust": {
+    "x": 0,
+    "y": 0,
+    "scale": 1
+  },
+  "partAdjust": {
+    "btn1": { "x": 176, "y": -96, "scale": 0.26 },
+    "btn2": { "x": 106, "y": -6, "scale": 0.26 },
+    "btn3": { "x": 248, "y": -6, "scale": 0.26 },
+    "btn4": { "x": 176, "y": 82, "scale": 0.26 },
+    "dpad": { "x": 0, "y": 0, "scale": 1 },
+    "actionbuttons": { "x": 0, "y": 0, "scale": 1 }
+  }
+}

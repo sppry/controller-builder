@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -69,20 +69,6 @@
       font-weight: 700;
     }
     .pn button.active { background: var(--accent); }
-    .cfg-tools { display: flex; gap: 6px; }
-    .cfg-tools button {
-      border: 1px solid #2a3f40;
-      background: #0d1415;
-      color: #d5eeee;
-      height: 32px;
-      padding: 0 10px;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: .6px;
-      text-transform: uppercase;
-      font-family: inherit;
-      cursor: pointer;
-    }
 
     .body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
     .left {
@@ -400,11 +386,6 @@
         <span>NextGen</span>
       </div>
       <div class="tabs" id="tabs"></div>
-      <div class="cfg-tools">
-        <button id="exportCfg">Export Config</button>
-        <button id="importCfg">Import Config</button>
-        <input id="importCfgFile" type="file" accept="application/json" style="display:none;" />
-      </div>
       <div class="pn">
         <button id="prev">&lsaquo;</button>
         <button id="next">&rsaquo;</button>
@@ -485,8 +466,7 @@
     const BUTTONS_IMG = "https://i.postimg.cc/pT7vpWJs/buttons-(1)-(1).png";
     const DPAD_IMG = "https://i.postimg.cc/3xDKpDcf/3Aq-M7y4rymdl-Ej-Rw-Xf184RA8ED5.png";
     const ACTION_BUTTONS_IMG = "https://i.postimg.cc/x1b0Hb4s/3Aq-M7z0Csnm8w3rechx25Gmk9d2.png";
-    const TRIM_ADJUST_STORAGE_KEY = "ps5_trim_adjust_v1";
-    const PART_ADJUST_STORAGE_KEY = "ps5_part_adjust_v1";
+    const ADJUSTMENTS_JSON_URL = "./ps5_adjustments.json";
     const CONFIG_STORAGE_KEY = "ps5_config_state_v1";
     const TRIM_TINT_VERSION = "v5";
     const BASE_PRICE = 89.99;
@@ -673,9 +653,7 @@
     const nextBtn = document.getElementById("next");
     const topView = document.getElementById("topView");
     const bottomView = document.getElementById("bottomView");
-    const exportCfg = document.getElementById("exportCfg");
-    const importCfg = document.getElementById("importCfg");
-    const importCfgFile = document.getElementById("importCfgFile");
+
     const panelTitle = document.getElementById("panelTitle");
     const panelDesc = document.getElementById("panelDesc");
     const optionsHead = document.getElementById("optionsHead");
@@ -705,48 +683,59 @@
     function clamp(n, min, max) {
       return Math.max(min, Math.min(max, n));
     }
+    function savePartAdjust() {
+      // Intentionally no localStorage persistence for part/trim adjustments.
+    }
 
-    function loadTrimAdjust() {
+    function normalizeTrimAdjust(raw) {
+      const src = raw && typeof raw === "object" ? raw : {};
+      return {
+        x: clamp(Number(src.x) || 0, -180, 180),
+        y: clamp(Number(src.y) || 0, -180, 180),
+        scale: clamp(Number(src.scale) || 1, 0.6, 1.5)
+      };
+    }
+
+    function normalizePartAdjust(raw) {
+      const src = raw && typeof raw === "object" ? raw : {};
+      const out = JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
+      Object.keys(out).forEach((k) => {
+        const p = src[k] && typeof src[k] === "object" ? src[k] : out[k];
+        out[k].x = clamp(Number(p.x), -240, 240);
+        out[k].y = clamp(Number(p.y), -240, 240);
+        out[k].scale = clamp(Number(p.scale), 0.1, 2);
+      });
+      return out;
+    }
+
+    function parseMaybeJson(raw) {
+      if (typeof raw !== "string") return raw;
       try {
-        const raw = localStorage.getItem(TRIM_ADJUST_STORAGE_KEY);
-        if (!raw) return { x: 0, y: 0, scale: 1 };
-        const parsed = JSON.parse(raw);
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function loadAdjustmentsFromJson() {
+      const fallback = {
+        trimAdjust: normalizeTrimAdjust({ x: 0, y: 0, scale: 1 }),
+        partAdjust: normalizePartAdjust(DEFAULT_PART_ADJUST)
+      };
+      try {
+        const response = await fetch(ADJUSTMENTS_JSON_URL, { cache: "no-store" });
+        if (!response.ok) return fallback;
+        const payload = await response.json();
+        const trimPayload = parseMaybeJson(payload.trimAdjust) || parseMaybeJson(payload.ps5_trim_adjust_v1);
+        const partPayload = parseMaybeJson(payload.partAdjust) || parseMaybeJson(payload.ps5_part_adjust_v1);
         return {
-          x: clamp(Number(parsed.x) || 0, -180, 180),
-          y: clamp(Number(parsed.y) || 0, -180, 180),
-          scale: clamp(Number(parsed.scale) || 1, 0.6, 1.5)
+          trimAdjust: normalizeTrimAdjust(trimPayload),
+          partAdjust: normalizePartAdjust(partPayload)
         };
       } catch (e) {
-        return { x: 0, y: 0, scale: 1 };
+        return fallback;
       }
     }
-
-    function loadPartAdjust() {
-      try {
-        const raw = localStorage.getItem(PART_ADJUST_STORAGE_KEY);
-        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
-        const parsed = JSON.parse(raw);
-        const out = JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
-        Object.keys(out).forEach((k) => {
-          const p = parsed && parsed[k] ? parsed[k] : out[k];
-          out[k].x = clamp(Number(p.x), -240, 240);
-          out[k].y = clamp(Number(p.y), -240, 240);
-          out[k].scale = clamp(Number(p.scale), 0.1, 2);
-        });
-        return out;
-      } catch (e) {
-        return JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
-      }
-    }
-
-    function savePartAdjust() {
-      try {
-        localStorage.setItem(PART_ADJUST_STORAGE_KEY, JSON.stringify(state.partAdjust));
-      } catch (e) {
-        // ignore
-      }
-    }
-
     function getDefaultSelections() {
       return {
         faceplate: COLOR_OPTIONS.faceplate[0],
@@ -818,39 +807,6 @@
         // ignore
       }
     }
-
-    function exportConfigBundle() {
-      const payload = {
-        ps5_config_state_v1: localStorage.getItem(CONFIG_STORAGE_KEY),
-        ps5_part_adjust_v1: localStorage.getItem(PART_ADJUST_STORAGE_KEY),
-        ps5_trim_adjust_v1: localStorage.getItem(TRIM_ADJUST_STORAGE_KEY),
-        exportedAt: new Date().toISOString()
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "ps5-config-backup.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function applyImportedConfig(payload) {
-      if (!payload || typeof payload !== "object") return;
-      if (typeof payload.ps5_config_state_v1 === "string") {
-        localStorage.setItem(CONFIG_STORAGE_KEY, payload.ps5_config_state_v1);
-      }
-      if (typeof payload.ps5_part_adjust_v1 === "string") {
-        localStorage.setItem(PART_ADJUST_STORAGE_KEY, payload.ps5_part_adjust_v1);
-      }
-      if (typeof payload.ps5_trim_adjust_v1 === "string") {
-        localStorage.setItem(TRIM_ADJUST_STORAGE_KEY, payload.ps5_trim_adjust_v1);
-      }
-      location.reload();
-    }
-
     function resetAllConfig() {
       state.selections = getDefaultSelections();
       state.smartOptions = { dpadButtons: "STOCK", triggersBumpers: "STOCK" };
@@ -860,11 +816,15 @@
       localStorage.removeItem(CONFIG_STORAGE_KEY);
       render();
     }
-
-    state.trimAdjust = loadTrimAdjust();
-    state.partAdjust = loadPartAdjust();
-    loadConfigState();
-
+    async function initializeApp() {
+      localStorage.removeItem("ps5_part_adjust_v1");
+      localStorage.removeItem("ps5_trim_adjust_v1");
+      const adjustmentState = await loadAdjustmentsFromJson();
+      state.trimAdjust = adjustmentState.trimAdjust;
+      state.partAdjust = adjustmentState.partAdjust;
+      loadConfigState();
+      render();
+    }
     function currentKey() {
       return sectionKeys[state.activeSection];
     }
@@ -1729,25 +1689,6 @@
       render();
     };
     resetMain.onclick = resetAllConfig;
-    exportCfg.onclick = exportConfigBundle;
-    importCfg.onclick = () => importCfgFile.click();
-    importCfgFile.onchange = () => {
-      const f = importCfgFile.files && importCfgFile.files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const payload = JSON.parse(String(reader.result || "{}"));
-          applyImportedConfig(payload);
-        } catch (e) {
-          alert("Invalid config JSON file.");
-        } finally {
-          importCfgFile.value = "";
-        }
-      };
-      reader.readAsText(f);
-    };
-
     function startPartDrag(e, partKey) {
       const key = currentKey();
       const keyMatches = key === partKey || (key === "buttons" && partKey.startsWith("btn"));
@@ -1798,8 +1739,7 @@
       item.el.addEventListener("pointerup", endPartDrag);
       item.el.addEventListener("pointercancel", endPartDrag);
     });
-
-    render();
+    initializeApp();
   </script>
 </body>
 </html>
