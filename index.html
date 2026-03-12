@@ -1,0 +1,1733 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCUF Lab</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050607;
+      --panel: #020202;
+      --line: #262626;
+      --accent: #1aa3a3;
+      --accent-2: #2ec4b6;
+      --muted: #7f7f82;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+    }
+    .app { height: 100dvh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    .top {
+      display: flex;
+      align-items: center;
+      background:
+        radial-gradient(140% 100% at 0% 0%, rgba(15, 67, 78, 0.35) 0%, rgba(4, 7, 12, 0) 55%),
+        linear-gradient(180deg, #040709 0%, #030405 100%);
+      border-bottom: 1px solid #111;
+      padding: 0 20px;
+      height: 68px;
+      gap: 16px;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; min-width: 160px; }
+    .logo span { font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; line-height: 1; transform: scaleX(.7); transform-origin: left center; }
+    .logo svg { width: 30px; height: 30px; }
+    .tabs { display: flex; flex: 1; overflow: auto; }
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid #3b3b3b;
+      color: #f6f6f6;
+      font-size: 18px;
+      letter-spacing: 1px;
+      padding: 0 28px;
+      height: 68px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .tab.active { color: #fff; border-bottom-color: #fff; font-weight: 900; }
+    .tab small { display: block; font-size: 12px; color: #9d9da1; margin-top: 2px; font-weight: 600; letter-spacing: .5px; }
+    .tab.active small { color: var(--accent); }
+    .pn { display: flex; gap: 6px; }
+    .pn button {
+      border: none;
+      color: #111;
+      width: 42px;
+      height: 42px;
+      border-radius: 0;
+      cursor: pointer;
+      font-size: 24px;
+      background: #173739;
+      font-weight: 700;
+    }
+    .pn button.active { background: var(--accent); }
+
+    .body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+    .left {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 18px 8px;
+      background: #050607;
+      position: relative;
+    }
+    .left::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.03;
+      background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .exit-lab {
+      position: absolute;
+      left: 28px;
+      top: 20px;
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 28px;
+      font-weight: 800;
+      font-family: inherit;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transform: scaleX(.72);
+      transform-origin: left center;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .preview-wrap {
+      width: 100%;
+      max-width: min(980px, calc(100vw - 460px));
+      position: relative;
+      z-index: 1;
+    }
+    .preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      min-height: clamp(280px, 52vh, 620px);
+      border-radius: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .controller-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(1.18);
+      transform-origin: center 52%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .trim-part-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 3;
+      transition: all .25s ease;
+      opacity: 1;
+      mix-blend-mode: normal;
+      transform-origin: center center;
+    }
+    .part-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 1;
+      mix-blend-mode: normal;
+      transform-origin: center center;
+    }
+    .part-adjust {
+      margin-top: 12px;
+      border-top: 1px solid #171717;
+      padding-top: 10px;
+    }
+    .part-adjust .h2 {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .part-adjust .r {
+      display: grid;
+      grid-template-columns: 20px 1fr 42px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+    .part-adjust .r label { font-size: 11px; color: #aaa; font-weight: 700; }
+    .part-adjust .r .v { font-size: 11px; text-align: right; color: #fff; font-weight: 700; }
+    .trim-area-tint {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      transition: all .25s ease;
+      mix-blend-mode: multiply;
+      clip-path: polygon(
+        30.2% 35.2%,
+        69.8% 35.2%,
+        75.6% 39.7%,
+        88.8% 57.2%,
+        97.8% 95.8%,
+        90.8% 100%,
+        73.8% 59.8%,
+        26.2% 59.8%,
+        9.2% 100%,
+        2.2% 95.8%,
+        11.2% 57.2%,
+        24.4% 39.7%
+      );
+      opacity: .82;
+      filter: blur(.25px);
+    }
+    .tint {
+      position: absolute;
+      pointer-events: none;
+      transition: all .3s;
+      z-index: 2;
+      mix-blend-mode: multiply;
+    }
+    .face-tint { inset: 0; border-radius: 12px; }
+    .shell-tint {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 45%;
+      border-radius: 0 0 12px 12px;
+    }
+    .fallback { z-index: 0; }
+    .controller {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      transform: translate(-50%, -50%);
+      width: 78%;
+      height: 62%;
+      border-radius: 42% 42% 40% 40% / 58% 58% 40% 40%;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .controller::before, .controller::after {
+      content: "";
+      position: absolute;
+      bottom: -20%;
+      width: 33%;
+      height: 45%;
+      background: var(--shell, #1a1a1a);
+      border-radius: 40px;
+      opacity: 0.9;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .controller::before { left: 7%; transform: rotate(18deg); }
+    .controller::after { right: 7%; transform: rotate(-18deg); }
+    .trim {
+      position: absolute;
+      top: 30%;
+      left: 33%;
+      right: 33%;
+      height: 6px;
+      border-radius: 4px;
+      background: var(--trim, #111);
+      opacity: 0.7;
+      filter: blur(1px);
+    }
+    .view-toggle {
+      margin-top: 10px;
+      display: flex;
+      background: #111;
+      border-radius: 0;
+      overflow: hidden;
+      border: 1px solid #666;
+      z-index: 1;
+    }
+    .view-toggle button {
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #d6d6d6;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      font-family: inherit;
+      text-transform: uppercase;
+    }
+    .view-toggle button.active { background: #efefef; color: #111; }
+
+    .sel { margin-top: 8px; text-align: center; z-index: 1; }
+    .sel .a { font-size: 12px; color: #7f7f82; letter-spacing: 2px; }
+    .sel .b { font-size: clamp(24px, 3.2vh, 36px); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+    .sel .c { font-size: clamp(14px, 2vh, 16px); color: var(--accent); margin-top: 2px; letter-spacing: 1px; }
+
+    .right { width: clamp(360px, 31vw, 460px); min-height: 0; background: #000; border-left: 1px solid #111; display: flex; flex-direction: column; }
+    .ph { padding: 10px 16px 8px; border-bottom: 1px solid #141414; }
+    .ph .k { font-size: 14px; color: #f1f1f1; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+    .ph .t { font-size: clamp(28px, 4.2vh, 42px); font-weight: 900; letter-spacing: .5px; line-height: 1; text-transform: uppercase; }
+    .ph .d { font-size: clamp(12px, 1.8vh, 14px); color: #b1b1b5; margin-top: 6px; line-height: 1.35; }
+
+    .opts { flex: 1; min-height: 0; padding: 10px 16px; overflow-y: auto; }
+    .opts .h { font-size: 15px; color: #fff; letter-spacing: 1px; margin-bottom: 10px; font-weight: 800; text-transform: uppercase; }
+    .grid { display: flex; flex-wrap: wrap; gap: 10px 14px; }
+    .sw {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      border: 2px solid #b6b6ba;
+      box-shadow: 0 0 0 2px #101010 inset;
+      cursor: pointer;
+      transition: all .18s;
+      outline: none;
+    }
+    .sw.selected {
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 2px #101010 inset;
+      transform: scale(1.15);
+    }
+    .sw-label { font-size: 16px; color: #f1f1f1; text-align: center; max-width: 86px; line-height: 1; font-weight: 700; transform: scaleX(.78); transform-origin: center top; }
+    .sw-price { font-size: 12px; color: var(--accent); font-weight: 700; }
+
+    .trig { display: flex; flex-wrap: wrap; gap: 12px; }
+    .to {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid #2a2a2a;
+      border-radius: 0;
+      padding: 10px 12px;
+      cursor: pointer;
+      min-width: 94px;
+      color: #aaa;
+    }
+    .to.selected { background: color-mix(in srgb, var(--accent) 22%, transparent); border-color: var(--accent); color: #fff; }
+    .to i { width: 30px; height: 30px; border-radius: 6px; border: 1px solid #444; display: block; }
+    .to span { font-size: 12px; font-weight: 600; letter-spacing: .5px; }
+    .to b { font-size: 10px; color: var(--accent); }
+
+    .price { border-top: 1px solid #161616; padding: 8px 16px 10px; }
+    .price .h { font-size: 12px; color: #f5f5f5; letter-spacing: 1px; margin-bottom: 6px; font-weight: 800; text-transform: uppercase; }
+    .line { display: flex; justify-content: space-between; font-size: 12px; color: #b5b5bb; }
+    .line.plus { color: var(--accent); }
+    .subtotal {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-top: 1px solid var(--line);
+      padding-top: 6px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+    .subtotal .l { font-size: 16px; color: var(--accent); letter-spacing: 1px; font-weight: 900; text-transform: uppercase; transform: scaleX(.8); transform-origin: left center; }
+    .subtotal .v { font-size: clamp(28px, 4vh, 40px); font-weight: 900; color: #fff; }
+    .cta { display: flex; justify-content: center; }
+    .btn { padding: 10px 0; border-radius: 0; cursor: pointer; font-family: inherit; }
+    .next {
+      width: min(280px, 100%);
+      border: none;
+      color: #111;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transform: scaleX(.9);
+      transform-origin: center;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+      box-shadow: none;
+    }
+
+    @media (max-width: 980px) {
+      .body { flex-direction: column; }
+      .right { width: 100%; border-left: none; border-top: 1px solid var(--line); }
+      .preview-wrap { max-width: 100%; }
+      .preview { min-height: 300px; }
+      .controller-img { transform: scale(1.05); }
+      .sw { width: 94px; height: 94px; }
+      .sw-label { max-width: 94px; font-size: 22px; }
+      .ph .t { font-size: 36px; }
+      .subtotal .v { font-size: 34px; }
+      .tab { font-size: 13px; padding: 0 14px; }
+      .view-toggle button, .next { font-size: 16px; transform: none; }
+      .exit-lab { font-size: 18px; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top">
+      <div class="logo">
+        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#1d2225"></circle><text x="13" y="18" text-anchor="middle" font-size="14" fill="white" font-weight="900" font-family="Arial">$</text></svg>
+        <span>NextGen</span>
+      </div>
+      <div class="tabs" id="tabs"></div>
+      <div class="pn">
+        <button id="prev">&lsaquo;</button>
+        <button id="next">&rsaquo;</button>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="left">
+        <div class="preview-wrap">
+          <div class="preview" id="preview">
+            <img id="controllerImg" class="controller-img" alt="PS5 Controller preview" />
+            <img id="trimPartOverlay" class="trim-part-overlay" alt="" />
+            <img id="button1Overlay" class="part-overlay" alt="" />
+            <img id="button2Overlay" class="part-overlay" alt="" />
+            <img id="button3Overlay" class="part-overlay" alt="" />
+            <img id="button4Overlay" class="part-overlay" alt="" />
+            <img id="dpadOverlay" class="part-overlay" alt="" />
+            <img id="actionButtonsOverlay" class="part-overlay" alt="" />
+            <div id="trimAreaTint" class="trim-area-tint"></div>
+            <div class="tint face-tint" id="faceTint"></div>
+            <div class="tint shell-tint" id="shellTint"></div>
+            <div class="controller fallback" id="controller"></div>
+            <div class="trim fallback" id="trim"></div>
+          </div>
+        </div>
+        <div class="view-toggle">
+          <button id="topView">TOP VIEW</button>
+          <button id="bottomView">BOTTOM VIEW</button>
+        </div>
+        <div class="sel">
+          <div class="a">CUSTOMIZING</div>
+          <div class="b" id="customizingSection"></div>
+          <div class="c" id="customizingChoice"></div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="ph">
+          <div class="k">DualSense Wireless Controller</div>
+          <div class="t" id="panelTitle"></div>
+          <div class="d" id="panelDesc"></div>
+        </div>
+
+        <div class="opts">
+          <div class="h" id="optionsHead"></div>
+          <div id="options"></div>
+        </div>
+
+        <div class="price" id="pricePanel">
+          <div class="h">PRICE BREAKDOWN</div>
+          <div id="priceRows"></div>
+          <div class="subtotal"><span class="l">SUBTOTAL</span><span class="v" id="subtotal"></span></div>
+          <div class="cta">
+            <button class="btn to" id="resetMain" style="flex:1;min-width:110px;">RESET</button>
+            <button class="btn next" id="nextStep" style="flex:2;width:auto;">NEXT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FRONT_IMG = "https://i.postimg.cc/xdcsXxzT/image-2026-03-12-041357620-(1).png";
+    const BACK_IMG = "https://i.ibb.co/wh5JsxDw/default-back-white.png";
+    const USE_IMAGE_TINTS = false;
+    const TRIM_TEMPLATE_IMG = "https://i.postimg.cc/qvMCsQdw/trim.png";
+    const FRONT_VIEW_SCALE = 1.06;
+    const BACK_VIEW_SCALE = 0.96;
+    const BACK_WHITE_SCALE_BOOST = 1.015;
+    const FRONT_VIEW_Y = "44%";
+    const BACK_VIEW_Y = "50%";
+    const REMOVE_WHITE_BG_FRONT = true;
+    const WHITE_BG_THRESHOLD = 248;
+    const FRONT_CONTENT_HEIGHT_RATIO = 0.84;
+    const FRONT_CONTENT_WIDTH_RATIO = 0.94;
+    const BACK_CONTENT_HEIGHT_RATIO = 0.9;
+    const BACK_CONTENT_WIDTH_RATIO = 0.95;
+    const BUTTONS_IMG = "https://i.postimg.cc/pT7vpWJs/buttons-(1)-(1).png";
+    const DPAD_IMG = "https://i.postimg.cc/3xDKpDcf/3Aq-M7y4rymdl-Ej-Rw-Xf184RA8ED5.png";
+    const ACTION_BUTTONS_IMG = "https://i.postimg.cc/x1b0Hb4s/3Aq-M7z0Csnm8w3rechx25Gmk9d2.png";
+    const TRIM_ADJUST_STORAGE_KEY = "ps5_trim_adjust_v1";
+    const PART_ADJUST_STORAGE_KEY = "ps5_part_adjust_v1";
+    const CONFIG_STORAGE_KEY = "ps5_config_state_v1";
+    const TRIM_TINT_VERSION = "v5";
+    const BASE_PRICE = 89.99;
+    const SECTIONS = ["FACE PLATE","TRIM","BACK PLATE","BUTTONS","D-PAD","ACTION BUTTONS","SMART OPTIONS","BUILD SUMMARY"];
+    const sectionKeys = ["faceplate","trim","backplate","buttons","dpad","actionbuttons","smartoptions","summary"];
+    const sectionDesc = [
+      "Choose the main faceplate color.",
+      "Accent trim color for edges & details.",
+      "Rear back plate surface color.",
+      "Button area styling options.",
+      "D-Pad shape and color.",
+      "Action button style options.",
+      "Smart option accessories.",
+      "Build summary."
+    ];
+
+    const SHARED_BUTTON_OPTIONS = [
+      { name: "White", hex: "#ffffff", price: 0 },
+      { name: "Black", hex: "#111111", price: 18 },
+      { name: "Chrome Black", hex: "#1d1f26", price: 18 },
+      { name: "New Hope Gray", hex: "#8A8D91", price: 18 },
+      { name: "Chrome Silver", hex: "#c9ccd3", price: 18 },
+      { name: "Midnight Blue", hex: "#162c75", price: 18 },
+      { name: "Blue", hex: "#1a3cff", price: 18 },
+      { name: "Chrome Green", hex: "#1f8f5e", price: 18 },
+      { name: "Green", hex: "#008f39", price: 18 },
+      { name: "Scarlet Red", hex: "#ce1f31", price: 18 },
+      { name: "Chrome Red", hex: "#d33b46", price: 18 },
+      { name: "Chrome Pink", hex: "#ff9ac1", price: 18 },
+      { name: "Cherry Blossom", hex: "#ff7fb6", price: 18 },
+      { name: "Coral", hex: "#ff7e5f", price: 18 },
+      { name: "Purple", hex: "#6d37c7", price: 18 },
+      { name: "Light Violet", hex: "#b48cff", price: 18 },
+      { name: "Chrome Gold", hex: "#d4af37", price: 18 },
+      { name: "Orange", hex: "#ff7a00", price: 18 }
+    ];
+
+    const CANONICAL_COLOR_HEX = {
+      white: "#ffffff",
+      black: "#111111",
+      chromeblack: "#1d1f26",
+      newhopegray: "#8a8d91",
+      chromesilver: "#c9ccd3",
+      midnightblue: "#162c75",
+      blue: "#1a3cff",
+      heavenblue: "#63b8ff",
+      mintgreen: "#74d6b5",
+      green: "#008f39",
+      racinggreen: "#0b6b3a",
+      lightcyan: "#c7ffff",
+      orange: "#ff7a00",
+      cautionyellow: "#ffd200",
+      passionred: "#cc1f2f",
+      scarletred: "#ce1f31",
+      chromered: "#d33b46",
+      chromepink: "#ff9ac1",
+      cherryblossom: "#ff7fb6",
+      cherryblossompink: "#ff7fb6",
+      coral: "#ff7e5f",
+      purple: "#6d37c7",
+      lightviolet: "#b48cff",
+      chromegold: "#d4af37"
+    };
+
+    const COLOR_OPTIONS = {
+      faceplate: [
+        { name: "White", hex: "#ffffff", price: 0, image: "https://i.postimg.cc/xdcsXxzT/image-2026-03-12-041357620-(1).png" },
+        { name: "Black", hex: "rgba(17,17,17,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-Black-2.jpg?v=1741853890" },
+        { name: "New Hope Gray", hex: "rgba(138,141,145,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-NewHopeGray-2.jpg?v=1741853983" },
+        { name: "Blue", hex: "rgba(26,60,255,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-Blue-2.jpg?v=1741853850" },
+        { name: "Racing Green", hex: "rgba(11,107,58,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-RacingGreen-2.jpg?v=1741854013" },
+        { name: "Matcha Green", hex: "rgba(123,160,91,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-MatchaGreen-2.jpg?v=1741854025" },
+        { name: "Passion Red", hex: "rgba(204,31,47,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-PassionRed-2.jpg?v=1741854052" },
+        { name: "Cherry Blossom Pink", hex: "rgba(255,127,182,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Front_Housing_Shell_for_PS5_Controller_-_Cherry_Blossoms_Pink-2.jpg?v=1765339372" },
+        { name: "Caution Yellow", hex: "rgba(255,210,0,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-CautionYellow-2.jpg?v=1741853996" },
+        { name: "Purple", hex: "rgba(109,55,199,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-Purple-2.jpg?v=1741853863" },
+        { name: "Chrome Gold", hex: "rgba(212,175,55,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-ChromeGold-2.jpg?v=1741851264" },
+        { name: "Chrome Silver", hex: "rgba(192,192,192,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-ChromeSilver-2.jpg?v=1741851276" }
+      ],
+      trim: [
+        { name: "White", hex: "#ffffff", price: 0, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-SolidWhite-2.jpg?v=1743152663" },
+        { name: "Black", hex: "#111111", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-SolidBlack-2.jpg?v=1743152865" },
+        { name: "New Hope Gray", hex: "#8A8D91", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-NewHopeGray-2.jpg?v=1743154684" },
+        { name: "Blue", hex: "#1a3cff", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-CobaltBlue-2_178a89bc-ac72-4b2d-87d1-341b8e1d1486.jpg?v=1743154651" },
+        { name: "Heaven Blue", hex: "#63b8ff", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-HeavenBlue-2.jpg?v=1743154342" },
+        { name: "Neon Green", hex: "#39ff14", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-NeonGreen-2.jpg?v=1743154520" },
+        { name: "Green", hex: "#008f39", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-Green-2.jpg?v=1743154182" },
+        { name: "Racing Green", hex: "#0b6b3a", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-RacingGreen-2.jpg?v=1743154353" },
+        { name: "Light Cyan", hex: "#c7ffff", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-LightCyan-2.jpg?v=1743154548" },
+        { name: "Orange", hex: "#ff7a00", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-Orange-2.jpg?v=1743154153" },
+        { name: "Caution Yellow", hex: "#ffd200", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-Cautionyellow-2.jpg?v=1743154220" },
+        { name: "Passion Red", hex: "#CC1F2F", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-PassionRed-2.jpg?v=1743154562" },
+        { name: "Cherry Blossom Pink", hex: "#ff7fb6", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-CherryBlossomsPink-2.jpg?v=1743154271" },
+        { name: "Purple", hex: "#6d37c7", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-ChameleonPurpleBlue-2.jpg?v=1743154112" },
+        { name: "Light Violet", hex: "#b48cff", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-LightViolet-2.jpg?v=1743154286" },
+        { name: "Matcha Green", hex: "#7BA05B", price: 18, trimImage: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementDecorativeTrimShellwithAccentRingsforPS5Controller-MatchaGreen-2.jpg?v=1743154535" }
+      ],
+      backplate: [
+        { name: "White", hex: "#ffffff", price: 0, image: "https://i.postimg.cc/25X0nVLV/e-Xtreme-Rate-Replacement-Back-Housing-Bottom-Shell-for-PS5-Controller-white-1-(1).png" },
+        { name: "Black", hex: "#111111", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Black-1.jpg?v=1755764661" },
+        { name: "New Hope Gray", hex: "#8A8D91", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_New_Hope_Gray-1.jpg?v=1755769367" },
+        { name: "Blue", hex: "#1a3cff", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Blue-1.jpg?v=1755764248" },
+        { name: "Heaven Blue", hex: "#63b8ff", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller_-_Heaven_Blue-1.jpg?v=1755767683" },
+        { name: "Mint Green", hex: "#74d6b5", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Mint_Green-1.jpg?v=1755769318" },
+        { name: "Green", hex: "#008f39", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Green-1.jpg?v=1755764586" },
+        { name: "Racing Green", hex: "#0b6b3a", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Green-1.jpg?v=1755764586" },
+        { name: "Light Cyan", hex: "#c7ffff", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller_-_Heaven_Blue-1.jpg?v=1755767683" },
+        { name: "Orange", hex: "#ff7a00", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Orange-1.jpg?v=1755764228" },
+        { name: "Caution Yellow", hex: "#ffd200", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller_-_Caution_Yellow-1.jpg?v=1755767701" },
+        { name: "Passion Red", hex: "#CC1F2F", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Passion_Red-1.jpg?v=1755769406" },
+        { name: "Cherry Blossom Pink", hex: "#ff7fb6", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller_-_Cherry_Blossoms_Pink-1.jpg?v=1755767743" },
+        { name: "Purple", hex: "#6d37c7", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller-_Purple-1.jpg?v=1755764603" },
+        { name: "Light Violet", hex: "#b48cff", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRate_Replacement_Back_Housing_Bottom_Shell_for_PS5_Controller_-_Light_Violet-1.jpg?v=1755767716" },
+      ],
+      buttons: SHARED_BUTTON_OPTIONS.map((c) => ({ ...c })),
+      dpad: SHARED_BUTTON_OPTIONS.map((c) => ({ ...c })),
+      actionbuttons: SHARED_BUTTON_OPTIONS.map((c) => ({ ...c })),
+      smartoptions: [{ name: "Smart Options", hex: "#ffffff", price: 0 }],
+      summary: [{ name: "Build Summary", hex: "#ffffff", price: 0 }]
+    };
+
+    function colorKey(name) {
+      return (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function normalizeColorOptions() {
+      Object.keys(COLOR_OPTIONS).forEach((section) => {
+        const list = COLOR_OPTIONS[section];
+        if (!Array.isArray(list)) return;
+        list.forEach((opt) => {
+          if (!opt || !opt.name) return;
+          const key = colorKey(opt.name);
+          const canonical = CANONICAL_COLOR_HEX[key];
+          if (canonical) opt.hex = canonical;
+        });
+      });
+    }
+
+    normalizeColorOptions();
+
+    const DEFAULT_PART_ADJUST = {
+      btn1: { x: 176, y: -96, scale: 0.26 },
+      btn2: { x: 106, y: -6, scale: 0.26 },
+      btn3: { x: 248, y: -6, scale: 0.26 },
+      btn4: { x: 176, y: 82, scale: 0.26 },
+      dpad: { x: 0, y: 0, scale: 1 },
+      actionbuttons: { x: 0, y: 0, scale: 1 }
+    };
+
+    const state = {
+      activeSection: 0,
+      view: "front",
+      frontImage: FRONT_IMG,
+      trimAdjust: { x: 0, y: 0, scale: 1 },
+      lockedParts: { btn1: true, btn2: true, btn3: true, btn4: true, dpad: true, actionbuttons: true },
+      partAdjust: JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST)),
+      smartOptions: {
+        dpadButtons: "STOCK",
+        triggersBumpers: "STOCK"
+      },
+      selections: {
+        faceplate: COLOR_OPTIONS.faceplate[0],
+        trim: COLOR_OPTIONS.trim[0],
+        backplate: COLOR_OPTIONS.backplate[0],
+        buttons: COLOR_OPTIONS.buttons[0],
+        dpad: COLOR_OPTIONS.dpad[0],
+        actionbuttons: COLOR_OPTIONS.actionbuttons[0],
+        smartoptions: COLOR_OPTIONS.smartoptions[0],
+        summary: COLOR_OPTIONS.summary[0]
+      },
+      imageFailed: { front: false, back: false }
+    };
+    const processedFrontImages = {};
+    const processingFrontImages = {};
+    const processedBackImages = {};
+    const processingBackImages = {};
+    const processedTrimImages = {};
+    const processingTrimImages = {};
+    const processedPartImages = {};
+    const processingPartImages = {};
+
+    const tabs = document.getElementById("tabs");
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+    const topView = document.getElementById("topView");
+    const bottomView = document.getElementById("bottomView");
+    const panelTitle = document.getElementById("panelTitle");
+    const panelDesc = document.getElementById("panelDesc");
+    const optionsHead = document.getElementById("optionsHead");
+    const options = document.getElementById("options");
+    const customizingSection = document.getElementById("customizingSection");
+    const customizingChoice = document.getElementById("customizingChoice");
+    const priceRows = document.getElementById("priceRows");
+    const subtotal = document.getElementById("subtotal");
+    const pricePanel = document.getElementById("pricePanel");
+    const controllerImg = document.getElementById("controllerImg");
+    const trimPartOverlay = document.getElementById("trimPartOverlay");
+    const button1Overlay = document.getElementById("button1Overlay");
+    const button2Overlay = document.getElementById("button2Overlay");
+    const button3Overlay = document.getElementById("button3Overlay");
+    const button4Overlay = document.getElementById("button4Overlay");
+    const dpadOverlay = document.getElementById("dpadOverlay");
+    const actionButtonsOverlay = document.getElementById("actionButtonsOverlay");
+    const trimAreaTint = document.getElementById("trimAreaTint");
+    const faceTint = document.getElementById("faceTint");
+    const shellTint = document.getElementById("shellTint");
+    const controller = document.getElementById("controller");
+    const trim = document.getElementById("trim");
+    const resetMain = document.getElementById("resetMain");
+    const nextStep = document.getElementById("nextStep");
+    const partDrag = { active: false, part: "", startX: 0, startY: 0, baseX: 0, baseY: 0 };
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function loadTrimAdjust() {
+      try {
+        const raw = localStorage.getItem(TRIM_ADJUST_STORAGE_KEY);
+        if (!raw) return { x: 0, y: 0, scale: 1 };
+        const parsed = JSON.parse(raw);
+        return {
+          x: clamp(Number(parsed.x) || 0, -180, 180),
+          y: clamp(Number(parsed.y) || 0, -180, 180),
+          scale: clamp(Number(parsed.scale) || 1, 0.6, 1.5)
+        };
+      } catch (e) {
+        return { x: 0, y: 0, scale: 1 };
+      }
+    }
+
+    function loadPartAdjust() {
+      try {
+        const raw = localStorage.getItem(PART_ADJUST_STORAGE_KEY);
+        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
+        const parsed = JSON.parse(raw);
+        const out = JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
+        Object.keys(out).forEach((k) => {
+          const p = parsed && parsed[k] ? parsed[k] : out[k];
+          out[k].x = clamp(Number(p.x), -240, 240);
+          out[k].y = clamp(Number(p.y), -240, 240);
+          out[k].scale = clamp(Number(p.scale), 0.1, 2);
+        });
+        return out;
+      } catch (e) {
+        return JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST));
+      }
+    }
+
+    function savePartAdjust() {
+      try {
+        localStorage.setItem(PART_ADJUST_STORAGE_KEY, JSON.stringify(state.partAdjust));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function getDefaultSelections() {
+      return {
+        faceplate: COLOR_OPTIONS.faceplate[0],
+        trim: COLOR_OPTIONS.trim[0],
+        backplate: COLOR_OPTIONS.backplate[0],
+        buttons: COLOR_OPTIONS.buttons[0],
+        dpad: COLOR_OPTIONS.dpad[0],
+        actionbuttons: COLOR_OPTIONS.actionbuttons[0],
+        smartoptions: COLOR_OPTIONS.smartoptions[0],
+        summary: COLOR_OPTIONS.summary[0]
+      };
+    }
+
+    function saveConfigState() {
+      try {
+        const payload = {
+          activeSection: state.activeSection,
+          view: state.view,
+          frontImage: state.frontImage,
+          selections: Object.fromEntries(
+            Object.entries(state.selections).map(([k, v]) => [k, v && v.name ? v.name : ""])
+          ),
+          smartOptions: { ...state.smartOptions }
+        };
+        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function loadConfigState() {
+      try {
+        const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+
+        if (parsed && parsed.selections) {
+          Object.keys(state.selections).forEach((k) => {
+            const name = parsed.selections[k];
+            const list = COLOR_OPTIONS[k];
+            if (!name || !Array.isArray(list)) return;
+            const found = list.find((o) => o.name === name);
+            if (found) state.selections[k] = found;
+          });
+        }
+
+        if (parsed && parsed.smartOptions) {
+          if (parsed.smartOptions.dpadButtons === "STOCK" || parsed.smartOptions.dpadButtons === "SMART") {
+            state.smartOptions.dpadButtons = parsed.smartOptions.dpadButtons;
+          }
+          if (parsed.smartOptions.triggersBumpers === "STOCK" || parsed.smartOptions.triggersBumpers === "SMART") {
+            state.smartOptions.triggersBumpers = parsed.smartOptions.triggersBumpers;
+          }
+        }
+
+        if (typeof parsed.activeSection === "number") {
+          state.activeSection = clamp(parsed.activeSection, 0, SECTIONS.length - 1);
+        }
+        if (parsed.view === "front" || parsed.view === "back") {
+          state.view = parsed.view;
+        }
+
+        if (state.selections.faceplate && state.selections.faceplate.image) {
+          state.frontImage = state.selections.faceplate.image;
+        } else if (parsed.frontImage) {
+          state.frontImage = parsed.frontImage;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function resetAllConfig() {
+      state.selections = getDefaultSelections();
+      state.smartOptions = { dpadButtons: "STOCK", triggersBumpers: "STOCK" };
+      state.frontImage = FRONT_IMG;
+      state.view = "front";
+      state.activeSection = 0;
+      localStorage.removeItem(CONFIG_STORAGE_KEY);
+      render();
+    }
+
+    state.trimAdjust = loadTrimAdjust();
+    state.partAdjust = loadPartAdjust();
+    loadConfigState();
+
+    function currentKey() {
+      return sectionKeys[state.activeSection];
+    }
+
+    function totalPrice() {
+      const smartTotal =
+        (state.smartOptions.dpadButtons === "SMART" ? 25 : 0) +
+        (state.smartOptions.triggersBumpers === "SMART" ? 25 : 0);
+      return BASE_PRICE + Object.values(state.selections).reduce((s, v) => s + (v && v.price ? v.price : 0), 0) + smartTotal;
+    }
+
+    function sectionLabel(i) {
+      const sel = state.selections[sectionKeys[i]];
+      if (!sel) return "";
+      return sel.price > 0 ? `+$${sel.price}` : "";
+    }
+
+    function shortName(name) {
+      return name.replace("Glacier ", "").replace("Midnight ", "").replace("Cobalt ", "").replace("Phantom ", "");
+    }
+
+    function shouldRemoveBg(option) {
+      if (!option || !option.name) return false;
+      return option.name !== "White";
+    }
+
+    function parseColorToRgb(color) {
+      if (!color) return { r: 255, g: 255, b: 255 };
+      const c = color.trim().toLowerCase();
+      if (c.startsWith("#")) {
+        let hex = c.slice(1);
+        if (hex.length === 3) {
+          hex = hex.split("").map((v) => v + v).join("");
+        }
+        if (hex.length === 6) {
+          const n = parseInt(hex, 16);
+          if (!Number.isNaN(n)) {
+            return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+          }
+        }
+      }
+      const m = c.match(/rgba?\(([^)]+)\)/);
+      if (m) {
+        const parts = m[1].split(",").map((v) => parseFloat(v.trim()));
+        return {
+          r: Math.max(0, Math.min(255, Math.round(parts[0] || 0))),
+          g: Math.max(0, Math.min(255, Math.round(parts[1] || 0))),
+          b: Math.max(0, Math.min(255, Math.round(parts[2] || 0)))
+        };
+      }
+      return { r: 255, g: 255, b: 255 };
+    }
+
+    function getAlphaBounds(data, w, h) {
+      let minX = w, minY = h, maxX = -1, maxY = -1;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          if (data[idx + 3] > 0) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < minX || maxY < minY) return null;
+      return { minX, minY, maxX, maxY };
+    }
+
+    function removeWhiteBackground(url, removeBg = true, normalize = true, targetHeightRatio = FRONT_CONTENT_HEIGHT_RATIO, targetWidthRatio = FRONT_CONTENT_WIDTH_RATIO) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const w = canvas.width;
+            const h = canvas.height;
+            const visited = new Uint8Array(w * h);
+            const stack = [];
+
+            function isBgPixel(idx) {
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+              const a = data[idx + 3];
+              const max = Math.max(r, g, b);
+              const min = Math.min(r, g, b);
+              const lowSaturation = (max - min) <= 22;
+              return a > 0 && r >= WHITE_BG_THRESHOLD && g >= WHITE_BG_THRESHOLD && b >= WHITE_BG_THRESHOLD && lowSaturation;
+            }
+
+            function pushIfBg(x, y) {
+              if (x < 0 || y < 0 || x >= w || y >= h) return;
+              const p = y * w + x;
+              if (visited[p]) return;
+              const idx = p * 4;
+              if (!isBgPixel(idx)) return;
+              visited[p] = 1;
+              stack.push(p);
+            }
+
+            if (removeBg) {
+              // Seed flood-fill from all borders only.
+              for (let x = 0; x < w; x++) {
+                pushIfBg(x, 0);
+                pushIfBg(x, h - 1);
+              }
+              for (let y = 1; y < h - 1; y++) {
+                pushIfBg(0, y);
+                pushIfBg(w - 1, y);
+              }
+
+              while (stack.length) {
+                const p = stack.pop();
+                const x = p % w;
+                const y = (p - x) / w;
+                const idx = p * 4;
+                data[idx + 3] = 0;
+
+                pushIfBg(x + 1, y);
+                pushIfBg(x - 1, y);
+                pushIfBg(x, y + 1);
+                pushIfBg(x, y - 1);
+              }
+
+              // Feather near-edge remnants for cleaner cutout.
+              for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                  const p = y * w + x;
+                  const idx = p * 4;
+                  if (data[idx + 3] === 0) continue;
+                  const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+                  const nearWhite = r >= (WHITE_BG_THRESHOLD - 6) && g >= (WHITE_BG_THRESHOLD - 6) && b >= (WHITE_BG_THRESHOLD - 6);
+                  if (!nearWhite) continue;
+                  const n1 = data[((p - 1) * 4) + 3] === 0;
+                  const n2 = data[((p + 1) * 4) + 3] === 0;
+                  const n3 = data[((p - w) * 4) + 3] === 0;
+                  const n4 = data[((p + w) * 4) + 3] === 0;
+                  if (n1 || n2 || n3 || n4) {
+                    data[idx + 3] = Math.min(data[idx + 3], 120);
+                  }
+                }
+              }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            if (!normalize) {
+              resolve({ src: canvas.toDataURL("image/png") });
+              return;
+            }
+
+            const bounds = getAlphaBounds(imageData.data, w, h);
+            if (!bounds) {
+              resolve({ src: canvas.toDataURL("image/png") });
+              return;
+            }
+
+            const bw = bounds.maxX - bounds.minX + 1;
+            const bh = bounds.maxY - bounds.minY + 1;
+            const out = document.createElement("canvas");
+            out.width = w;
+            out.height = h;
+            const octx = out.getContext("2d");
+
+            // Normalize processed part images into a consistent visual box.
+            const targetH = h * targetHeightRatio;
+            const targetWMax = w * targetWidthRatio;
+            let scale = targetH / Math.max(bh, 1);
+            if (bw * scale > targetWMax) {
+              scale = targetWMax / Math.max(bw, 1);
+            }
+
+            const drawW = bw * scale;
+            const drawH = bh * scale;
+            const drawX = (w - drawW) / 2;
+            const drawY = (h - drawH) / 2;
+
+            octx.clearRect(0, 0, w, h);
+            octx.drawImage(
+              canvas,
+              bounds.minX, bounds.minY, bw, bh,
+              drawX, drawY, drawW, drawH
+            );
+
+            resolve({ src: out.toDataURL("image/png") });
+          } catch (e) {
+            resolve({ src: url });
+          }
+        };
+        img.onerror = () => resolve({ src: url });
+        img.src = url;
+      });
+    }
+
+    async function ensureProcessedFrontImage(url, removeBg = true) {
+      if (!REMOVE_WHITE_BG_FRONT) return;
+      const cacheKey = `${url}::${removeBg ? "bg" : "nobg"}`;
+      if (!url || processedFrontImages[cacheKey] || processingFrontImages[cacheKey]) return;
+
+      processingFrontImages[cacheKey] = true;
+      const processed = await removeWhiteBackground(url, removeBg, true, FRONT_CONTENT_HEIGHT_RATIO, FRONT_CONTENT_WIDTH_RATIO);
+      processedFrontImages[cacheKey] = processed.src || url;
+      delete processingFrontImages[cacheKey];
+
+      if (state.view === "front" && (state.frontImage || FRONT_IMG) === url) {
+        renderPreview();
+      }
+    }
+
+    async function ensureProcessedBackImage(url, removeBg = true) {
+      const cacheKey = `${url}::${removeBg ? "bg" : "nobg"}`;
+      if (!url || processedBackImages[cacheKey] || processingBackImages[cacheKey]) return;
+
+      processingBackImages[cacheKey] = true;
+      const processed = await removeWhiteBackground(url, removeBg, true, BACK_CONTENT_HEIGHT_RATIO, BACK_CONTENT_WIDTH_RATIO);
+      processedBackImages[cacheKey] = processed.src || url;
+      delete processingBackImages[cacheKey];
+
+      if (state.view === "back" && ((state.selections.backplate && state.selections.backplate.image) || BACK_IMG) === url) {
+        renderPreview();
+      }
+    }
+
+    function tintTrimTemplate(color) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = id.data;
+            const base = parseColorToRgb(color);
+
+            // Measure luminance range on visible pixels so we can normalize shading.
+            let minLum = 1;
+            let maxLum = 0;
+            for (let i = 0; i < d.length; i += 4) {
+              if (d[i + 3] === 0) continue;
+              const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+              if (lum < minLum) minLum = lum;
+              if (lum > maxLum) maxLum = lum;
+            }
+            const lumRange = Math.max(0.001, maxLum - minLum);
+            const isVeryLight = (base.r + base.g + base.b) / 3 > 220;
+            const isVeryDark = (base.r + base.g + base.b) / 3 < 35;
+
+            for (let i = 0; i < d.length; i += 4) {
+              const a = d[i + 3];
+              if (a === 0) continue;
+
+              const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+              const n = Math.max(0, Math.min(1, (lum - minLum) / lumRange));
+              const eased = Math.pow(n, 0.88);
+
+              // Keep shape detail but avoid muddy colors.
+              if (isVeryLight) {
+                // Keep white trim visibly white: bright cool-neutral range with subtle shading only.
+                const tone = Math.round(242 + (eased * 13)); // 242..255
+                d[i] = Math.max(0, Math.min(255, tone - 2));    // R
+                d[i + 1] = Math.max(0, Math.min(255, tone - 1)); // G
+                d[i + 2] = Math.max(0, Math.min(255, tone));    // B
+                continue;
+              }
+
+              let strength = 0.42 + (eased * 0.82);
+              if (isVeryDark) strength = 0.28 + (eased * 0.78);
+
+              const r = Math.round(base.r * strength);
+              const g = Math.round(base.g * strength);
+              const b = Math.round(base.b * strength);
+
+              // Add small neutral highlight from source for glossy depth.
+              const hi = Math.round(16 * Math.pow(eased, 1.4));
+              d[i] = Math.max(0, Math.min(255, r + hi));
+              d[i + 1] = Math.max(0, Math.min(255, g + hi));
+              d[i + 2] = Math.max(0, Math.min(255, b + hi));
+            }
+
+            ctx.putImageData(id, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+          } catch (e) {
+            resolve(TRIM_TEMPLATE_IMG);
+          }
+        };
+        img.onerror = () => resolve(TRIM_TEMPLATE_IMG);
+        img.src = TRIM_TEMPLATE_IMG;
+      });
+    }
+
+    async function ensureTrimImage(color) {
+      const key = `${TRIM_TINT_VERSION}::${(color || "").toLowerCase()}`;
+      if (!key || processedTrimImages[key] || processingTrimImages[key]) return;
+      processingTrimImages[key] = true;
+      processedTrimImages[key] = await tintTrimTemplate(color);
+      delete processingTrimImages[key];
+      if (state.view === "front") renderPreview();
+    }
+
+    function partTemplateForKey(key) {
+      if (key === "buttons") return BUTTONS_IMG;
+      if (key === "dpad") return DPAD_IMG;
+      if (key === "actionbuttons") return ACTION_BUTTONS_IMG;
+      return "";
+    }
+
+    function activePartKey() {
+      const key = currentKey();
+      if (key === "buttons" || key === "dpad" || key === "actionbuttons") return key;
+      return "";
+    }
+
+    function tintPartTemplate(templateUrl, color) {
+      return new Promise((resolve) => {
+        if (!templateUrl) {
+          resolve("");
+          return;
+        }
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = id.data;
+            const base = parseColorToRgb(color);
+
+            for (let i = 0; i < d.length; i += 4) {
+              const a = d[i + 3];
+              if (a === 0) continue;
+              const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+              const shade = 0.34 + (lum * 0.78);
+              d[i] = Math.max(0, Math.min(255, Math.round(base.r * shade)));
+              d[i + 1] = Math.max(0, Math.min(255, Math.round(base.g * shade)));
+              d[i + 2] = Math.max(0, Math.min(255, Math.round(base.b * shade)));
+            }
+
+            ctx.putImageData(id, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+          } catch (e) {
+            resolve(templateUrl);
+          }
+        };
+        img.onerror = () => resolve(templateUrl);
+        img.src = templateUrl;
+      });
+    }
+
+    async function ensurePartImage(part, templateUrl, color) {
+      if (!part || !templateUrl) return;
+      const key = `${part}::${(color || "").toLowerCase()}`;
+      if (processedPartImages[key] || processingPartImages[key]) return;
+      processingPartImages[key] = true;
+      processedPartImages[key] = await tintPartTemplate(templateUrl, color);
+      delete processingPartImages[key];
+      if (state.view === "front") renderPreview();
+    }
+
+    function renderTabs() {
+      tabs.innerHTML = "";
+      SECTIONS.forEach((s, i) => {
+        const b = document.createElement("button");
+        b.className = `tab ${state.activeSection === i ? "active" : ""}`;
+        b.innerHTML = `${s}<small>${sectionLabel(i)}</small>`;
+        b.onclick = () => { state.activeSection = i; render(); };
+        tabs.appendChild(b);
+      });
+      prevBtn.className = state.activeSection > 0 ? "active" : "";
+      nextBtn.className = state.activeSection < SECTIONS.length - 1 ? "active" : "";
+    }
+
+    function renderOptions() {
+      const key = currentKey();
+      const list = COLOR_OPTIONS[key];
+      const triggerLike = false;
+      optionsHead.textContent = triggerLike ? "SELECT OPTION" : "SELECT COLOR";
+      options.innerHTML = "";
+
+      if (key === "smartoptions") {
+        optionsHead.textContent = "SELECT OPTION";
+        const wrap = document.createElement("div");
+        wrap.className = "trig";
+        wrap.style.flexDirection = "column";
+        wrap.style.alignItems = "stretch";
+        wrap.style.gap = "14px";
+
+        function addGroup(title, stateKey) {
+          const g = document.createElement("div");
+          g.style.display = "flex";
+          g.style.flexDirection = "column";
+          g.style.gap = "8px";
+
+          const t = document.createElement("div");
+          t.textContent = title;
+          t.style.fontSize = "12px";
+          t.style.letterSpacing = "1px";
+          t.style.fontWeight = "800";
+          t.style.color = "#fff";
+          g.appendChild(t);
+
+          const row = document.createElement("div");
+          row.style.display = "flex";
+          row.style.gap = "8px";
+
+          ["STOCK", "SMART"].forEach((choice) => {
+            const b = document.createElement("button");
+            const selected = state.smartOptions[stateKey] === choice;
+            b.className = `to ${selected ? "selected" : ""}`;
+            b.style.flex = "1";
+            b.innerHTML = `<span>${choice}</span>`;
+            b.onclick = () => {
+              state.smartOptions[stateKey] = choice;
+              render();
+            };
+            row.appendChild(b);
+          });
+
+          g.appendChild(row);
+          wrap.appendChild(g);
+        }
+
+        addGroup("D-PAD / BUTTONS", "dpadButtons");
+        addGroup("TRIGGERS / BUMPERS", "triggersBumpers");
+        options.appendChild(wrap);
+        return;
+      }
+
+      if (key === "summary") {
+        optionsHead.textContent = "BUILD SUMMARY";
+        const wrap = document.createElement("div");
+        wrap.style.display = "flex";
+        wrap.style.flexDirection = "column";
+        wrap.style.justifyContent = "space-between";
+        wrap.style.height = "100%";
+        wrap.style.gap = "12px";
+
+        const rows = document.createElement("div");
+        rows.style.display = "flex";
+        rows.style.flexDirection = "column";
+        rows.style.gap = "8px";
+
+        const base = document.createElement("div");
+        base.className = "line";
+        base.innerHTML = `<span>Base DualSense</span><span>$${BASE_PRICE.toFixed(2)}</span>`;
+        rows.appendChild(base);
+
+        Object.entries(state.selections).forEach(([k, v]) => {
+          if (v && v.price > 0) {
+            const row = document.createElement("div");
+            row.className = "line plus";
+            row.innerHTML = `<span style="text-transform:capitalize;">${k}</span><span>+$${v.price.toFixed(2)}</span>`;
+            rows.appendChild(row);
+          }
+        });
+
+        if (state.smartOptions.dpadButtons === "SMART") {
+          const row = document.createElement("div");
+          row.className = "line plus";
+          row.innerHTML = `<span>D-PAD / BUTTONS SMART</span><span>+$25.00</span>`;
+          rows.appendChild(row);
+        }
+        if (state.smartOptions.triggersBumpers === "SMART") {
+          const row = document.createElement("div");
+          row.className = "line plus";
+          row.innerHTML = `<span>TRIGGERS / BUMPERS SMART</span><span>+$25.00</span>`;
+          rows.appendChild(row);
+        }
+        wrap.appendChild(rows);
+
+        const footer = document.createElement("div");
+        footer.style.display = "flex";
+        footer.style.flexDirection = "column";
+        footer.style.gap = "10px";
+
+        const sub = document.createElement("div");
+        sub.className = "subtotal";
+        sub.innerHTML = `<span class="l">SUBTOTAL</span><span class="v">$${totalPrice().toFixed(2)}</span>`;
+        footer.appendChild(sub);
+
+        const actions = document.createElement("div");
+        actions.style.display = "flex";
+        actions.style.gap = "8px";
+
+        const reset = document.createElement("button");
+        reset.className = "to";
+        reset.textContent = "RESET";
+        reset.style.flex = "1";
+        reset.style.justifyContent = "center";
+        reset.onclick = resetAllConfig;
+        actions.appendChild(reset);
+
+        const add = document.createElement("button");
+        add.className = "btn next";
+        add.textContent = "ADD TO CART";
+        add.style.flex = "2";
+        add.style.width = "auto";
+        add.onclick = () => {};
+        actions.appendChild(add);
+
+        footer.appendChild(actions);
+
+        wrap.appendChild(footer);
+        options.appendChild(wrap);
+        return;
+      }
+
+      if (!triggerLike) {
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        list.forEach((c) => {
+          const wrap = document.createElement("div");
+          wrap.style.display = "flex";
+          wrap.style.flexDirection = "column";
+          wrap.style.alignItems = "center";
+          wrap.style.gap = "4px";
+
+          const sw = document.createElement("button");
+          sw.className = `sw ${state.selections[key].name === c.name ? "selected" : ""}`;
+          sw.title = c.name;
+          sw.style.background = c.texture
+            ? "repeating-linear-gradient(45deg, #111 0px, #111 2px, #222 2px, #222 4px)"
+            : c.hex;
+          sw.onclick = () => selectOption(c);
+          wrap.appendChild(sw);
+
+          const nm = document.createElement("span");
+          nm.className = "sw-label";
+          nm.textContent = shortName(c.name);
+          wrap.appendChild(nm);
+
+          if (c.price > 0) {
+            const pr = document.createElement("span");
+            pr.className = "sw-price";
+            pr.textContent = `+$${c.price}`;
+            wrap.appendChild(pr);
+          }
+
+          grid.appendChild(wrap);
+        });
+        options.appendChild(grid);
+        const partKey = activePartKey();
+        if (partKey && !state.lockedParts[partKey] && partKey !== "buttons") {
+          const adj = state.partAdjust[partKey];
+          const box = document.createElement("div");
+          box.className = "part-adjust";
+          box.innerHTML = `
+            <div class="h2">Move Overlay</div>
+            <div class="r"><label>X</label><input id="partX" type="range" min="-240" max="240" step="1" value="${Math.round(adj.x)}" /><span class="v" id="partXVal">${Math.round(adj.x)}</span></div>
+            <div class="r"><label>Y</label><input id="partY" type="range" min="-240" max="240" step="1" value="${Math.round(adj.y)}" /><span class="v" id="partYVal">${Math.round(adj.y)}</span></div>
+            <div class="r"><label>S</label><input id="partS" type="range" min="0.1" max="2" step="0.01" value="${adj.scale.toFixed(2)}" /><span class="v" id="partSVal">${adj.scale.toFixed(2)}</span></div>
+            <button id="savePartLoc" type="button" class="to selected" style="margin-top:4px;min-width:120px;">Save Location</button>
+          `;
+          options.appendChild(box);
+          const partX = box.querySelector("#partX");
+          const partY = box.querySelector("#partY");
+          const partS = box.querySelector("#partS");
+          const partXVal = box.querySelector("#partXVal");
+          const partYVal = box.querySelector("#partYVal");
+          const partSVal = box.querySelector("#partSVal");
+          const savePartLoc = box.querySelector("#savePartLoc");
+          partX.oninput = () => {
+            state.partAdjust[partKey].x = Number(partX.value);
+            partXVal.textContent = `${Math.round(state.partAdjust[partKey].x)}`;
+            savePartAdjust();
+            renderPreview();
+          };
+          partY.oninput = () => {
+            state.partAdjust[partKey].y = Number(partY.value);
+            partYVal.textContent = `${Math.round(state.partAdjust[partKey].y)}`;
+            savePartAdjust();
+            renderPreview();
+          };
+          partS.oninput = () => {
+            state.partAdjust[partKey].scale = Number(partS.value);
+            partSVal.textContent = state.partAdjust[partKey].scale.toFixed(2);
+            savePartAdjust();
+            renderPreview();
+          };
+          savePartLoc.onclick = () => {
+            savePartAdjust();
+            savePartLoc.textContent = "Saved";
+            setTimeout(() => { savePartLoc.textContent = "Save Location"; }, 900);
+          };
+        } else if (partKey === "buttons") {
+          const buttonsLocked = !!state.lockedParts.btn1 && !!state.lockedParts.btn2 && !!state.lockedParts.btn3 && !!state.lockedParts.btn4;
+          const box = document.createElement("div");
+          box.className = "part-adjust";
+          if (buttonsLocked) {
+            box.innerHTML = `
+              <div class="h2">Buttons Locked</div>
+              <button id="saveButtonsLoc" type="button" class="to selected" style="margin-top:4px;min-width:160px;">Save Buttons Location</button>
+            `;
+            options.appendChild(box);
+            const saveButtonsLoc = box.querySelector("#saveButtonsLoc");
+            saveButtonsLoc.onclick = () => {
+              savePartAdjust();
+              saveButtonsLoc.textContent = "Saved";
+              setTimeout(() => { saveButtonsLoc.textContent = "Save Buttons Location"; }, 900);
+            };
+          } else {
+            const currentSize = state.partAdjust.btn1.scale;
+            box.innerHTML = `
+              <div class="h2">Buttons: Drag + Size</div>
+              <div class="r"><label>S</label><input id="buttonsScale" type="range" min="0.1" max="2" step="0.01" value="${currentSize.toFixed(2)}" /><span class="v" id="buttonsScaleVal">${currentSize.toFixed(2)}</span></div>
+              <button id="saveButtonsLoc" type="button" class="to selected" style="margin-top:4px;min-width:160px;">Save Buttons Location</button>
+            `;
+            options.appendChild(box);
+            const sizeInput = box.querySelector("#buttonsScale");
+            const sizeVal = box.querySelector("#buttonsScaleVal");
+            const saveButtonsLoc = box.querySelector("#saveButtonsLoc");
+            sizeInput.oninput = () => {
+              const s = Number(sizeInput.value);
+              state.partAdjust.btn1.scale = s;
+              state.partAdjust.btn2.scale = s;
+              state.partAdjust.btn3.scale = s;
+              state.partAdjust.btn4.scale = s;
+              sizeVal.textContent = s.toFixed(2);
+              savePartAdjust();
+              renderPreview();
+            };
+            saveButtonsLoc.onclick = () => {
+              savePartAdjust();
+              saveButtonsLoc.textContent = "Saved";
+              setTimeout(() => { saveButtonsLoc.textContent = "Save Buttons Location"; }, 900);
+            };
+          }
+        } else if (partKey && state.lockedParts[partKey]) {
+          const lockMsg = document.createElement("div");
+          lockMsg.className = "part-adjust";
+          lockMsg.innerHTML = `<div class="h2">Overlay Locked</div>`;
+          options.appendChild(lockMsg);
+        }
+      } else {
+        const tr = document.createElement("div");
+        tr.className = "trig";
+        list.forEach((c) => {
+          const b = document.createElement("button");
+          b.className = `to ${state.selections[key].name === c.name ? "selected" : ""}`;
+          b.innerHTML = `<i style="background:${c.hex}"></i><span>${c.label || c.name}</span>${c.price > 0 ? `<b>+$${c.price}</b>` : ""}`;
+          b.onclick = () => selectOption(c);
+          tr.appendChild(b);
+        });
+        options.appendChild(tr);
+      }
+    }
+
+    function renderPreview() {
+      const fp = state.selections.faceplate.hex;
+      const bp = state.selections.backplate.hex;
+      const sh = state.selections.buttons.hex;
+      const tr = state.selections.trim.hex;
+      const btnColor = state.selections.buttons.hex;
+      const dpadColor = state.selections.dpad.hex;
+      const actionColor = state.selections.actionbuttons.hex;
+      const isFront = state.view === "front";
+      const selectedFront = state.frontImage || FRONT_IMG;
+      const selectedFaceplate = state.selections.faceplate;
+      const selectedBackplate = state.selections.backplate;
+      const selectedBack = (selectedBackplate && selectedBackplate.image) || BACK_IMG;
+      const removeBg = shouldRemoveBg(selectedFaceplate);
+      // Always normalize backplate images with border flood-fill so every color
+      // (including white) uses the same content bounds and visual scale.
+      const removeBgBack = true;
+      const frontKey = `${selectedFront}::${removeBg ? "bg" : "nobg"}`;
+      const backKey = `${selectedBack}::${removeBgBack ? "bg" : "nobg"}`;
+      if (isFront) ensureProcessedFrontImage(selectedFront, removeBg);
+      if (!isFront) ensureProcessedBackImage(selectedBack, removeBgBack);
+      const frontSrc = isFront ? (processedFrontImages[frontKey] || selectedFront) : selectedFront;
+      const backSrc = !isFront ? (processedBackImages[backKey] || selectedBack) : selectedBack;
+      const src = isFront ? frontSrc : backSrc;
+      const fallbackVisible = state.imageFailed[state.view];
+      const whiteBackScale = (!isFront && selectedBackplate && selectedBackplate.name === "White")
+        ? BACK_WHITE_SCALE_BOOST
+        : 1;
+      const viewScale = isFront ? FRONT_VIEW_SCALE : (BACK_VIEW_SCALE * whiteBackScale);
+      const viewY = isFront ? FRONT_VIEW_Y : BACK_VIEW_Y;
+
+      if (controllerImg.dataset.src !== src) {
+        const targetView = state.view;
+        controllerImg.dataset.src = src;
+        controllerImg.onload = () => {
+          state.imageFailed[targetView] = false;
+          renderPreview();
+        };
+        controllerImg.onerror = () => {
+          state.imageFailed[targetView] = true;
+          renderPreview();
+        };
+        controllerImg.src = src;
+      }
+
+      const primary = isFront ? fp : bp;
+      controller.style.background = primary;
+      controller.style.setProperty("--shell", sh);
+      trim.style.background = tr;
+      trim.style.display = isFront ? "block" : "none";
+
+      const showImageTints = !fallbackVisible && USE_IMAGE_TINTS;
+      if (isFront) ensureTrimImage(tr);
+      if (isFront) {
+        ensurePartImage("btn", BUTTONS_IMG, btnColor);
+        ensurePartImage("dpad", DPAD_IMG, dpadColor);
+        ensurePartImage("actionbuttons", ACTION_BUTTONS_IMG, actionColor);
+      }
+
+      controllerImg.style.display = fallbackVisible ? "none" : "block";
+      controllerImg.style.transform = `scale(${viewScale})`;
+      controllerImg.style.transformOrigin = `center ${viewY}`;
+      const isFaceBlack = isFront && state.selections.faceplate && state.selections.faceplate.name === "Black";
+      controllerImg.style.filter = isFaceBlack ? "brightness(0.82) contrast(1.06)" : "none";
+      trimAreaTint.style.display = "none";
+      trimPartOverlay.style.display = !fallbackVisible && isFront ? "block" : "none";
+      trimPartOverlay.style.transform = `translate(${state.trimAdjust.x}px, ${state.trimAdjust.y}px) scale(${state.trimAdjust.scale})`;
+      trimPartOverlay.style.pointerEvents = "none";
+      trimPartOverlay.style.cursor = "default";
+      if (isFront) {
+        const trimKey = `${TRIM_TINT_VERSION}::${(tr || "").toLowerCase()}`;
+        trimPartOverlay.src = processedTrimImages[trimKey] || TRIM_TEMPLATE_IMG;
+      } else {
+        trimPartOverlay.removeAttribute("src");
+      }
+
+      const partMap = [
+        { key: "btn1", cacheKey: "btn", el: button1Overlay, color: btnColor, template: BUTTONS_IMG },
+        { key: "btn2", cacheKey: "btn", el: button2Overlay, color: btnColor, template: BUTTONS_IMG },
+        { key: "btn3", cacheKey: "btn", el: button3Overlay, color: btnColor, template: BUTTONS_IMG },
+        { key: "btn4", cacheKey: "btn", el: button4Overlay, color: btnColor, template: BUTTONS_IMG },
+        { key: "dpad", cacheKey: "dpad", el: dpadOverlay, color: dpadColor, template: DPAD_IMG },
+        { key: "actionbuttons", cacheKey: "actionbuttons", el: actionButtonsOverlay, color: actionColor, template: ACTION_BUTTONS_IMG }
+      ];
+      const activeKey = activePartKey();
+      partMap.forEach((p) => {
+        const adj = state.partAdjust[p.key];
+        const imgKey = `${p.cacheKey}::${(p.color || "").toLowerCase()}`;
+        p.el.style.display = !fallbackVisible && isFront && p.template ? "block" : "none";
+        p.el.style.transform = `translate(${adj.x}px, ${adj.y}px) scale(${adj.scale})`;
+        const isLocked = !!state.lockedParts[p.key];
+        const isActive = activeKey === p.key || (activeKey === "buttons" && p.key.startsWith("btn"));
+        const forceLocked = p.key === "dpad" || p.key === "actionbuttons";
+        p.el.style.pointerEvents = forceLocked ? "none" : (!fallbackVisible && isFront && isActive && !isLocked ? "auto" : "none");
+        p.el.style.cursor = forceLocked ? "default" : (isActive && !isLocked ? "move" : "default");
+        if (isFront && p.template) {
+          p.el.src = processedPartImages[imgKey] || p.template;
+        } else {
+          p.el.removeAttribute("src");
+        }
+      });
+
+      faceTint.style.display = showImageTints ? "block" : "none";
+      shellTint.style.display = showImageTints ? "block" : "none";
+      controller.style.display = fallbackVisible ? "block" : "none";
+      trim.style.display = fallbackVisible && isFront ? "block" : "none";
+
+      faceTint.style.background = primary;
+      faceTint.style.opacity = primary === "#f0f0f0" || primary === "#ececec" ? "0" : "0.28";
+      shellTint.style.background = sh;
+      shellTint.style.opacity = sh === "#1a1a1a" || sh === "#111" ? "0" : "0.22";
+
+      topView.className = isFront ? "active" : "";
+      bottomView.className = isFront ? "" : "active";
+    }
+
+    function renderMeta() {
+      const sectionName = SECTIONS[state.activeSection].replace(/^\d+\.\s*/, "");
+      const key = currentKey();
+      const chosen = state.selections[key];
+      panelTitle.textContent = sectionName;
+      panelDesc.textContent = sectionDesc[state.activeSection];
+      customizingSection.textContent = sectionName;
+      if (key === "smartoptions") {
+        customizingChoice.textContent = `D-PAD/BUTTONS: ${state.smartOptions.dpadButtons} | TRIGGERS/BUMPERS: ${state.smartOptions.triggersBumpers}`;
+      } else {
+        customizingChoice.textContent = `${chosen.name}${chosen.price > 0 ? ` | +$${chosen.price}` : " | Included"}`;
+      }
+    }
+
+    function renderPrice() {
+      priceRows.innerHTML = "";
+
+      const base = document.createElement("div");
+      base.className = "line";
+      base.innerHTML = `<span>Base DualSense</span><span>$${BASE_PRICE.toFixed(2)}</span>`;
+      priceRows.appendChild(base);
+
+      Object.entries(state.selections).forEach(([k, v]) => {
+        if (v.price > 0) {
+          const row = document.createElement("div");
+          row.className = "line plus";
+          row.innerHTML = `<span style="text-transform:capitalize;">${k}</span><span>+$${v.price.toFixed(2)}</span>`;
+          priceRows.appendChild(row);
+        }
+      });
+
+      if (state.smartOptions.dpadButtons === "SMART") {
+        const row = document.createElement("div");
+        row.className = "line plus";
+        row.innerHTML = `<span>D-PAD / BUTTONS SMART</span><span>+$25.00</span>`;
+        priceRows.appendChild(row);
+      }
+      if (state.smartOptions.triggersBumpers === "SMART") {
+        const row = document.createElement("div");
+        row.className = "line plus";
+        row.innerHTML = `<span>TRIGGERS / BUMPERS SMART</span><span>+$25.00</span>`;
+        priceRows.appendChild(row);
+      }
+
+      subtotal.textContent = `$${totalPrice().toFixed(2)}`;
+    }
+
+    function selectOption(option) {
+      const key = currentKey();
+      state.selections[key] = option;
+      if (key === "faceplate" && option.image) {
+        state.frontImage = option.image;
+      }
+      state.view = state.activeSection === 2 ? "back" : "front";
+      render();
+    }
+
+    function render() {
+      renderTabs();
+      renderOptions();
+      renderPreview();
+      renderMeta();
+      renderPrice();
+      pricePanel.style.display = currentKey() === "summary" ? "none" : "block";
+      nextStep.textContent = state.activeSection < SECTIONS.length - 1 ? "NEXT" : "ADD TO CART";
+      saveConfigState();
+    }
+
+    prevBtn.onclick = () => {
+      state.activeSection = Math.max(0, state.activeSection - 1);
+      render();
+    };
+
+    nextBtn.onclick = () => {
+      state.activeSection = Math.min(SECTIONS.length - 1, state.activeSection + 1);
+      render();
+    };
+
+    topView.onclick = () => { state.view = "front"; render(); };
+    bottomView.onclick = () => { state.view = "back"; render(); };
+
+    nextStep.onclick = () => {
+      state.activeSection = Math.min(SECTIONS.length - 1, state.activeSection + 1);
+      render();
+    };
+    resetMain.onclick = resetAllConfig;
+
+    function startPartDrag(e, partKey) {
+      const key = currentKey();
+      const keyMatches = key === partKey || (key === "buttons" && partKey.startsWith("btn"));
+      if (partKey === "dpad" || partKey === "actionbuttons") return;
+      if (state.view !== "front" || !keyMatches || state.lockedParts[partKey]) return;
+      partDrag.active = true;
+      partDrag.part = partKey;
+      partDrag.startX = e.clientX;
+      partDrag.startY = e.clientY;
+      partDrag.baseX = state.partAdjust[partKey].x;
+      partDrag.baseY = state.partAdjust[partKey].y;
+      e.target.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    }
+
+    function movePartDrag(e) {
+      if (!partDrag.active || !partDrag.part) return;
+      const partKey = partDrag.part;
+      state.partAdjust[partKey].x = partDrag.baseX + (e.clientX - partDrag.startX);
+      state.partAdjust[partKey].y = partDrag.baseY + (e.clientY - partDrag.startY);
+      savePartAdjust();
+      renderPreview();
+      const partX = document.getElementById("partX");
+      const partY = document.getElementById("partY");
+      const partXVal = document.getElementById("partXVal");
+      const partYVal = document.getElementById("partYVal");
+      if (partX) partX.value = String(Math.round(state.partAdjust[partKey].x));
+      if (partY) partY.value = String(Math.round(state.partAdjust[partKey].y));
+      if (partXVal) partXVal.textContent = `${Math.round(state.partAdjust[partKey].x)}`;
+      if (partYVal) partYVal.textContent = `${Math.round(state.partAdjust[partKey].y)}`;
+    }
+
+    function endPartDrag() {
+      partDrag.active = false;
+      partDrag.part = "";
+    }
+
+    [
+      { el: button1Overlay, key: "btn1" },
+      { el: button2Overlay, key: "btn2" },
+      { el: button3Overlay, key: "btn3" },
+      { el: button4Overlay, key: "btn4" },
+      { el: dpadOverlay, key: "dpad" },
+      { el: actionButtonsOverlay, key: "actionbuttons" }
+    ].forEach((item) => {
+      item.el.addEventListener("pointerdown", (e) => startPartDrag(e, item.key));
+      item.el.addEventListener("pointermove", movePartDrag);
+      item.el.addEventListener("pointerup", endPartDrag);
+      item.el.addEventListener("pointercancel", endPartDrag);
+    });
+
+    render();
+  </script>
+</body>
+</html>
