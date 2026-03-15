@@ -22,7 +22,8 @@
       color: #fff;
       font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
     }
-    .app { height: 100dvh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    .app { height: 100dvh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; opacity: 0; visibility: hidden; }
+    .app.ready { opacity: 1; visibility: visible; }
     .top {
       display: flex;
       align-items: center;
@@ -34,9 +35,8 @@
       height: 68px;
       gap: 16px;
     }
-    .logo { display: flex; align-items: center; gap: 8px; min-width: 160px; }
-    .logo span { font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; line-height: 1; transform: scaleX(.7); transform-origin: left center; }
-    .logo svg { width: 30px; height: 30px; }
+    .logo { display: flex; align-items: center; min-width: 160px; }
+    .logo img { height: 96px; width: auto; display: block; object-fit: contain; }
     .tabs { display: flex; flex: 1; overflow: auto; }
     .tab {
       background: none;
@@ -287,7 +287,7 @@
 
     .right { width: clamp(360px, 31vw, 460px); min-height: 0; background: #000; border-left: 1px solid #111; display: flex; flex-direction: column; }
     .ph { padding: 10px 16px 8px; border-bottom: 1px solid #141414; }
-    .ph .k { font-size: 14px; color: #f1f1f1; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+    .ph .k { font-size: 14px; color: var(--accent); letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
     .ph .t { font-size: clamp(28px, 4.2vh, 42px); font-weight: 900; letter-spacing: .5px; line-height: 1; text-transform: uppercase; }
     .ph .d { font-size: clamp(12px, 1.8vh, 14px); color: #b1b1b5; margin-top: 6px; line-height: 1.35; }
 
@@ -324,13 +324,15 @@
       padding: 10px 12px;
       cursor: pointer;
       min-width: 94px;
-      color: #aaa;
+      color: #f2f6f6;
     }
     .to.selected { background: color-mix(in srgb, var(--accent) 22%, transparent); border-color: var(--accent); color: #fff; }
     .to i { width: 30px; height: 30px; border-radius: 6px; border: 1px solid #444; display: block; }
     .to span { font-size: 12px; font-weight: 600; letter-spacing: .5px; }
     .to b { font-size: 10px; color: var(--accent); }
 
+        .cta .to { background: #0e1517; border-color: #35575a; color: #ffffff; }
+    .next { text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
     .price { border-top: 1px solid #161616; padding: 8px 16px 10px; }
     .price .h { font-size: 12px; color: #f5f5f5; letter-spacing: 1px; margin-bottom: 6px; font-weight: 800; text-transform: uppercase; }
     .line { display: flex; justify-content: space-between; font-size: 12px; color: #b5b5bb; }
@@ -348,10 +350,10 @@
     .subtotal .v { font-size: clamp(28px, 4vh, 40px); font-weight: 900; color: #fff; }
     .cta { display: flex; justify-content: center; }
     .btn { padding: 10px 0; border-radius: 0; cursor: pointer; font-family: inherit; }
-    .next {
+     .next {
       width: min(280px, 100%);
       border: none;
-      color: #111;
+      color: #ffffff;
       font-size: 16px;
       font-weight: 900;
       letter-spacing: 1px;
@@ -373,7 +375,7 @@
       .ph .t { font-size: 36px; }
       .subtotal .v { font-size: 34px; }
       .tab { font-size: 13px; padding: 0 14px; }
-      .view-toggle button, .next { font-size: 16px; transform: none; }
+      .view-toggle button,  .next { font-size: 16px; transform: none; }
       .exit-lab { font-size: 18px; transform: none; }
     }
   </style>
@@ -382,8 +384,7 @@
   <div class="app">
     <div class="top">
       <div class="logo">
-        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#1d2225"></circle><text x="13" y="18" text-anchor="middle" font-size="14" fill="white" font-weight="900" font-family="Arial">$</text></svg>
-        <span>NextGen</span>
+        <img src="https://i.postimg.cc/QN2XJ85m/Artboard-1.png" alt="NextGen" />
       </div>
       <div class="tabs" id="tabs"></div>
       <div class="pn">
@@ -449,11 +450,14 @@
   </div>
 
   <script>
-    const FRONT_IMG = "https://i.postimg.cc/xdcsXxzT/image-2026-03-12-041357620-(1).png";
+    const FRONT_IMG = "https://i.postimg.cc/bwDwjmnF/image-2026-03-14-234832545.png";
     const BACK_IMG = "https://i.ibb.co/wh5JsxDw/default-back-white.png";
     const USE_IMAGE_TINTS = false;
     const TRIM_TEMPLATE_IMG = "https://i.postimg.cc/qvMCsQdw/trim.png";
     const FRONT_VIEW_SCALE = 1.06;
+    const FRONT_WHITE_SCALE_BOOST = 1.00;
+    const FRONT_WHITE_OFFSET_X = -7;
+    const FRONT_WHITE_OFFSET_Y = -11;
     const BACK_VIEW_SCALE = 0.96;
     const BACK_WHITE_SCALE_BOOST = 1.015;
     const FRONT_VIEW_Y = "44%";
@@ -468,19 +472,32 @@
     const DPAD_IMG = "https://i.postimg.cc/3xDKpDcf/3Aq-M7y4rymdl-Ej-Rw-Xf184RA8ED5.png";
     const ACTION_BUTTONS_IMG = "https://i.postimg.cc/cHf8XgvQ/action.png";
     const ACTION_BUTTONS_IMG_2 = "https://i.postimg.cc/9MyqJRDz/action-2.png";
-    const ADJUSTMENTS_JSON_URL = "./ps5_adjustments.json";
+    const ADJUSTMENTS_JSON_URL = window.PS5_ADJUSTMENTS_URL || "./ps5_adjustments.json";
+    const LOCAL_INLINE_ADJUSTMENTS = {
+      trimAdjust: { x: 0, y: 46, scale: 1 },
+      partAdjust: {
+        btn1: { x: 189, y: -147, scale: 0.38 },
+        btn2: { x: 145, y: -103, scale: 0.38 },
+        btn3: { x: 235, y: -102, scale: 0.38 },
+        btn4: { x: 190, y: -58, scale: 0.38 },
+        dpad: { x: -191, y: -102, scale: 0.42 },
+        actionbuttons: { x: -156, y: -153, scale: 0.59 },
+        actionbuttons2: { x: 156, y: -149, scale: 0.59 }
+      }
+    };
     const CONFIG_STORAGE_KEY = "ps5_config_state_v1";
+    const ADJUSTMENTS_INLINE_STORAGE_KEY = "ps5_inline_adjustments_v1";
     const TRIM_TINT_VERSION = "v5";
+    const TRIM_LENGTH_SCALE_NORMAL = 1.00;
+    const TRIM_LENGTH_SCALE_STOCK = 0.94;
     const BASE_PRICE = 89.99;
-    const SECTIONS = ["FACE PLATE","TRIM","BACK PLATE","BUTTONS","D-PAD","ACTION BUTTONS","SMART OPTIONS","BUILD SUMMARY"];
-    const sectionKeys = ["faceplate","trim","backplate","buttons","dpad","actionbuttons","smartoptions","summary"];
+    const SECTIONS = ["FACE PLATE","TRIM","BACK PLATE","BUTTON KIT","SMART OPTIONS","BUILD SUMMARY"];
+    const sectionKeys = ["faceplate","trim","backplate","buttons","smartoptions","summary"];
     const sectionDesc = [
       "Choose the main faceplate color.",
       "Accent trim color for edges & details.",
       "Rear back plate surface color.",
-      "Button area styling options.",
-      "D-Pad shape and color.",
-      "Action button style options.",
+      "Button kit color (Buttons + D-Pad + Action Buttons).",
       "Smart option accessories.",
       "Build summary."
     ];
@@ -535,7 +552,7 @@
 
     const COLOR_OPTIONS = {
       faceplate: [
-        { name: "White", hex: "#ffffff", price: 0, image: "https://i.postimg.cc/xdcsXxzT/image-2026-03-12-041357620-(1).png" },
+        { name: "White", hex: "#ffffff", price: 0, image: "https://i.postimg.cc/bwDwjmnF/image-2026-03-14-234832545.png" },
         { name: "Black", hex: "rgba(17,17,17,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-Black-2.jpg?v=1741853890" },
         { name: "New Hope Gray", hex: "rgba(138,141,145,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-NewHopeGray-2.jpg?v=1741853983" },
         { name: "Blue", hex: "rgba(26,60,255,0.55)", price: 25, image: "https://cdn.shopify.com/s/files/1/0633/0381/1322/files/eXtremeRateReplacementFrontHousingShellwithTouchpadforPS5Controller-Blue-2.jpg?v=1741853850" },
@@ -624,8 +641,10 @@
       view: "front",
       frontImage: FRONT_IMG,
       trimAdjust: { x: 0, y: 0, scale: 1 },
+      stockTrimAdjust: { x: 0, y: 0, scale: 1 },
       lockedParts: { btn1: true, btn2: true, btn3: true, btn4: true, dpad: true, actionbuttons: true, actionbuttons2: true },
       partAdjust: JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST)),
+      stockPartAdjust: JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST)),
       smartOptions: {
         dpadButtons: "STOCK",
         triggersBumpers: "STOCK"
@@ -635,12 +654,13 @@
         trim: COLOR_OPTIONS.trim[0],
         backplate: COLOR_OPTIONS.backplate[0],
         buttons: COLOR_OPTIONS.buttons[0],
-        dpad: COLOR_OPTIONS.dpad[0],
-        actionbuttons: COLOR_OPTIONS.actionbuttons[0],
+        dpad: { ...COLOR_OPTIONS.buttons[0], price: 0 },
+        actionbuttons: { ...COLOR_OPTIONS.buttons[0], price: 0 },
         smartoptions: COLOR_OPTIONS.smartoptions[0],
         summary: COLOR_OPTIONS.summary[0]
       },
-      imageFailed: { front: false, back: false }
+      imageFailed: { front: false, back: false },
+      stockActive: { faceplate: false, trim: false, backplate: false, buttons: false }
     };
     const processedFrontImages = {};
     const processingFrontImages = {};
@@ -683,12 +703,46 @@
     const resetMain = document.getElementById("resetMain");
     const nextStep = document.getElementById("nextStep");
     const partDrag = { active: false, part: "", startX: 0, startY: 0, baseX: 0, baseY: 0 };
+    const appRoot = document.querySelector(".app");
+    const BUTTON_KEYS = ["btn1", "btn2", "btn3", "btn4"];
+    const BUTTON_GRAB_RADIUS_BASE = 16;
 
     function clamp(n, min, max) {
       return Math.max(min, Math.min(max, n));
     }
     function savePartAdjust() {
-      // Intentionally no localStorage persistence for part/trim adjustments.
+      try {
+        const payload = {
+          normalTrimAdjust: {
+            x: Number(state.trimAdjust.x),
+            y: Number(state.trimAdjust.y),
+            scale: Number(state.trimAdjust.scale)
+          },
+          normalPartAdjust: JSON.parse(JSON.stringify(state.partAdjust)),
+          stockTrimAdjust: {
+            x: Number(state.stockTrimAdjust.x),
+            y: Number(state.stockTrimAdjust.y),
+            scale: Number(state.stockTrimAdjust.scale)
+          },
+          stockPartAdjust: JSON.parse(JSON.stringify(state.stockPartAdjust)),
+          trimAdjust: {
+            x: Number(state.trimAdjust.x),
+            y: Number(state.trimAdjust.y),
+            scale: Number(state.trimAdjust.scale)
+          },
+          partAdjust: JSON.parse(JSON.stringify(state.partAdjust))
+        };
+
+        LOCAL_INLINE_ADJUSTMENTS.normalTrimAdjust = JSON.parse(JSON.stringify(payload.normalTrimAdjust));
+        LOCAL_INLINE_ADJUSTMENTS.normalPartAdjust = JSON.parse(JSON.stringify(payload.normalPartAdjust));
+        LOCAL_INLINE_ADJUSTMENTS.stockTrimAdjust = JSON.parse(JSON.stringify(payload.stockTrimAdjust));
+        LOCAL_INLINE_ADJUSTMENTS.stockPartAdjust = JSON.parse(JSON.stringify(payload.stockPartAdjust));
+        LOCAL_INLINE_ADJUSTMENTS.trimAdjust = JSON.parse(JSON.stringify(payload.trimAdjust));
+        LOCAL_INLINE_ADJUSTMENTS.partAdjust = JSON.parse(JSON.stringify(payload.partAdjust));
+        localStorage.setItem(ADJUSTMENTS_INLINE_STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {
+        // ignore
+      }
     }
 
     function normalizeTrimAdjust(raw) {
@@ -712,6 +766,21 @@
       return out;
     }
 
+
+    function isBaselineDefaultAdjust(trimAdjust, partAdjust) {
+      const trimIsDefault =
+        Math.round(Number(trimAdjust && trimAdjust.x || 0)) === 0 &&
+        Math.round(Number(trimAdjust && trimAdjust.y || 0)) === 0 &&
+        Number(Number(trimAdjust && trimAdjust.scale || 1).toFixed(2)) === 1;
+      if (!trimIsDefault) return false;
+      return Object.keys(DEFAULT_PART_ADJUST).every((k) => {
+        const a = partAdjust && partAdjust[k] ? partAdjust[k] : DEFAULT_PART_ADJUST[k];
+        const b = DEFAULT_PART_ADJUST[k];
+        return Math.round(Number(a.x || 0)) === Math.round(Number(b.x || 0)) &&
+          Math.round(Number(a.y || 0)) === Math.round(Number(b.y || 0)) &&
+          Number(Number(a.scale || 1).toFixed(2)) === Number(Number(b.scale || 1).toFixed(2));
+      });
+    }
     function parseMaybeJson(raw) {
       if (typeof raw !== "string") return raw;
       try {
@@ -722,23 +791,113 @@
     }
 
     async function loadAdjustmentsFromJson() {
-      const fallback = {
+      const fallbackNormal = {
         trimAdjust: normalizeTrimAdjust({ x: 0, y: 0, scale: 1 }),
         partAdjust: normalizePartAdjust(DEFAULT_PART_ADJUST)
       };
-      try {
-        const response = await fetch(ADJUSTMENTS_JSON_URL, { cache: "no-store" });
-        if (!response.ok) return fallback;
-        const payload = await response.json();
-        const trimPayload = parseMaybeJson(payload.trimAdjust) || parseMaybeJson(payload.ps5_trim_adjust_v1);
-        const partPayload = parseMaybeJson(payload.partAdjust) || parseMaybeJson(payload.ps5_part_adjust_v1);
+
+      const normalizePayload = (payload) => {
+        const legacyTrimPayload = parseMaybeJson(payload && payload.trimAdjust) || parseMaybeJson(payload && payload.ps5_trim_adjust_v1);
+        const legacyPartPayload = parseMaybeJson(payload && payload.partAdjust) || parseMaybeJson(payload && payload.ps5_part_adjust_v1);
+
+        const normalTrimPayload = parseMaybeJson(payload && payload.normalTrimAdjust) || parseMaybeJson(payload && payload.normal && payload.normal.trimAdjust);
+        const normalPartPayload = parseMaybeJson(payload && payload.normalPartAdjust) || parseMaybeJson(payload && payload.normal && payload.normal.partAdjust);
+        const stockTrimPayload = parseMaybeJson(payload && payload.stockTrimAdjust) || parseMaybeJson(payload && payload.stock && payload.stock.trimAdjust);
+        const stockPartPayload = parseMaybeJson(payload && payload.stockPartAdjust) || parseMaybeJson(payload && payload.stock && payload.stock.partAdjust);
+
+        const hasSplit = !!(normalTrimPayload || normalPartPayload || stockTrimPayload || stockPartPayload || (payload && payload.normal) || (payload && payload.stock));
+
+        const legacyTrim = normalizeTrimAdjust(legacyTrimPayload || fallbackNormal.trimAdjust);
+        const legacyPart = normalizePartAdjust(legacyPartPayload || fallbackNormal.partAdjust);
+
+        const normalTrim = hasSplit
+          ? normalizeTrimAdjust(normalTrimPayload || fallbackNormal.trimAdjust)
+          : legacyTrim;
+        const normalPart = hasSplit
+          ? normalizePartAdjust(normalPartPayload || fallbackNormal.partAdjust)
+          : legacyPart;
+
+        const stockTrim = hasSplit
+          ? normalizeTrimAdjust(stockTrimPayload || normalTrim)
+          : legacyTrim;
+        const stockPart = hasSplit
+          ? normalizePartAdjust(stockPartPayload || normalPart)
+          : legacyPart;
+
         return {
-          trimAdjust: normalizeTrimAdjust(trimPayload),
-          partAdjust: normalizePartAdjust(partPayload)
+          trimAdjust: normalTrim,
+          partAdjust: normalPart,
+          stockTrimAdjust: stockTrim,
+          stockPartAdjust: stockPart
         };
+      };
+
+      try {
+        const localRaw = localStorage.getItem(ADJUSTMENTS_INLINE_STORAGE_KEY);
+        if (localRaw) {
+          const localPayload = JSON.parse(localRaw);
+          return normalizePayload(localPayload);
+        }
       } catch (e) {
-        return fallback;
+        // ignore local override parse issues
       }
+
+      const candidates = [];
+      const push = (u) => {
+        if (u && !candidates.includes(u)) candidates.push(u);
+      };
+
+      push(ADJUSTMENTS_JSON_URL);
+      try { push(new URL(ADJUSTMENTS_JSON_URL, window.location.href).href); } catch (e) {}
+
+      if (window.location.origin && window.location.origin !== "null") {
+        push(`${window.location.origin}/ps5_adjustments.json`);
+        const pathDir = window.location.pathname.replace(/[^/]*$/, "");
+        push(`${window.location.origin}${pathDir}ps5_adjustments.json`);
+      }
+
+      const globalPayload = parseMaybeJson(window.PS5_ADJUSTMENTS_DATA) || window.PS5_ADJUSTMENTS_DATA;
+      if (globalPayload && typeof globalPayload === "object") {
+        return normalizePayload(globalPayload);
+      }
+
+      for (const url of candidates) {
+        try {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) continue;
+          const text = await response.text();
+          if (!text || !text.trim()) continue;
+          const payload = JSON.parse(text);
+          return normalizePayload(payload);
+        } catch (e) {
+          // Try next candidate.
+        }
+      }
+
+      if (window.location.protocol === "file:" && LOCAL_INLINE_ADJUSTMENTS) {
+        return normalizePayload(LOCAL_INLINE_ADJUSTMENTS);
+      }
+      if (window.location.protocol === "file:") {
+        try {
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", ADJUSTMENTS_JSON_URL, false);
+          xhr.send(null);
+          const ok = xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300);
+          if (ok && xhr.responseText) {
+            const payload = JSON.parse(xhr.responseText);
+            return normalizePayload(payload);
+          }
+        } catch (e) {
+          // Keep fallback.
+        }
+      }
+
+      return {
+        trimAdjust: fallbackNormal.trimAdjust,
+        partAdjust: fallbackNormal.partAdjust,
+        stockTrimAdjust: fallbackNormal.trimAdjust,
+        stockPartAdjust: fallbackNormal.partAdjust
+      };
     }
     function getDefaultSelections() {
       return {
@@ -746,11 +905,25 @@
         trim: COLOR_OPTIONS.trim[0],
         backplate: COLOR_OPTIONS.backplate[0],
         buttons: COLOR_OPTIONS.buttons[0],
-        dpad: COLOR_OPTIONS.dpad[0],
-        actionbuttons: COLOR_OPTIONS.actionbuttons[0],
+        dpad: { ...COLOR_OPTIONS.buttons[0], price: 0 },
+        actionbuttons: { ...COLOR_OPTIONS.buttons[0], price: 0 },
         smartoptions: COLOR_OPTIONS.smartoptions[0],
         summary: COLOR_OPTIONS.summary[0]
       };
+    }
+
+    function syncButtonKitSelections(baseOption) {
+      if (!baseOption) return;
+      state.selections.buttons = baseOption;
+      state.selections.dpad = { ...baseOption, price: 0 };
+      state.selections.actionbuttons = { ...baseOption, price: 0 };
+    }
+
+    function stockOptionForKey(key) {
+      const defaults = getDefaultSelections();
+      const base = defaults[key] || (Array.isArray(COLOR_OPTIONS[key]) ? COLOR_OPTIONS[key][0] : null);
+      if (!base) return null;
+      return { ...base, name: "Stock", price: 0, __stock: true };
     }
 
     function saveConfigState() {
@@ -762,7 +935,8 @@
           selections: Object.fromEntries(
             Object.entries(state.selections).map(([k, v]) => [k, v && v.name ? v.name : ""])
           ),
-          smartOptions: { ...state.smartOptions }
+          smartOptions: { ...state.smartOptions },
+          stockActive: { ...state.stockActive }
         };
         localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(payload));
       } catch (e) {
@@ -783,6 +957,14 @@
             if (!name || !Array.isArray(list)) return;
             const found = list.find((o) => o.name === name);
             if (found) state.selections[k] = found;
+          });
+        }
+
+        syncButtonKitSelections(state.selections.buttons);
+
+        if (parsed && parsed.stockActive) {
+          ["faceplate","trim","backplate","buttons"].forEach((k) => {
+            state.stockActive[k] = !!parsed.stockActive[k];
           });
         }
 
@@ -818,21 +1000,53 @@
       state.view = "front";
       state.activeSection = 0;
       localStorage.removeItem(CONFIG_STORAGE_KEY);
+      state.stockActive = { faceplate: false, trim: false, backplate: false, buttons: false };
       render();
     }
     async function initializeApp() {
       localStorage.removeItem("ps5_part_adjust_v1");
       localStorage.removeItem("ps5_trim_adjust_v1");
-      const adjustmentState = await loadAdjustmentsFromJson();
-      state.trimAdjust = adjustmentState.trimAdjust;
-      state.partAdjust = adjustmentState.partAdjust;
-      loadConfigState();
-      render();
+      try {
+        const adjustmentState = await loadAdjustmentsFromJson();
+        const baselineNormalTrim = normalizeTrimAdjust(LOCAL_INLINE_ADJUSTMENTS.trimAdjust);
+        const baselineNormalPart = normalizePartAdjust(LOCAL_INLINE_ADJUSTMENTS.partAdjust);
+        state.trimAdjust = baselineNormalTrim;
+        state.partAdjust = baselineNormalPart;
+        state.stockTrimAdjust = adjustmentState.stockTrimAdjust || adjustmentState.trimAdjust || baselineNormalTrim;
+        state.stockPartAdjust = adjustmentState.stockPartAdjust || adjustmentState.partAdjust || baselineNormalPart;
+      } finally {
+        loadConfigState();
+        render();
+        try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+        if (appRoot) appRoot.classList.add("ready");
+      }
+    }
+    function isStockFaceplateSelected() {
+      const defaults = getDefaultSelections();
+      return !!state.stockActive.faceplate && state.selections.faceplate && defaults.faceplate && state.selections.faceplate.name === defaults.faceplate.name;
+    }
+    function useStockAlignment() {
+      return isStockFaceplateSelected() || (state.selections.faceplate && state.selections.faceplate.name === "White");
+    }
+    function getActiveTrimAdjust() {
+      return useStockAlignment() ? state.stockTrimAdjust : state.trimAdjust;
+    }
+    function getActivePartAdjust() {
+      return useStockAlignment() ? state.stockPartAdjust : state.partAdjust;
     }
     function currentKey() {
       return sectionKeys[state.activeSection];
     }
 
+
+    function normalizeStockFlags() {
+      const defaults = getDefaultSelections();
+      ["faceplate", "trim", "backplate", "buttons"].forEach((k) => {
+        if (state.stockActive[k] && state.selections[k] && defaults[k] && state.selections[k].name !== defaults[k].name) {
+          state.stockActive[k] = false;
+        }
+      });
+    }
     function totalPrice() {
       const smartTotal =
         (state.smartOptions.dpadButtons === "SMART" ? 25 : 0) +
@@ -982,6 +1196,42 @@
               }
             }
 
+            if (removeBg) {
+              // De-fringe anti-aliased edge pixels that still carry white matte color.
+              // This removes the light halo when compositing on dark backgrounds.
+              for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                  const p = y * w + x;
+                  const idx = p * 4;
+                  const a = data[idx + 3];
+                  if (a === 0) continue;
+
+                  const hasTransparentNeighbor =
+                    data[((p - 1) * 4) + 3] === 0 ||
+                    data[((p + 1) * 4) + 3] === 0 ||
+                    data[((p - w) * 4) + 3] === 0 ||
+                    data[((p + w) * 4) + 3] === 0;
+
+                  if (!hasTransparentNeighbor) continue;
+
+                  const alpha = a / 255;
+                  // Un-matte from white for semi-transparent edge pixels.
+                  if (alpha < 1) {
+                    data[idx] = Math.max(0, Math.min(255, Math.round((data[idx] - (255 * (1 - alpha))) / Math.max(alpha, 0.001))));
+                    data[idx + 1] = Math.max(0, Math.min(255, Math.round((data[idx + 1] - (255 * (1 - alpha))) / Math.max(alpha, 0.001))));
+                    data[idx + 2] = Math.max(0, Math.min(255, Math.round((data[idx + 2] - (255 * (1 - alpha))) / Math.max(alpha, 0.001))));
+                  }
+
+                  // If edge is still near-white, soften alpha a bit more.
+                  const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+                  const nearWhite = r >= 232 && g >= 232 && b >= 232;
+                  if (nearWhite) {
+                    data[idx + 3] = Math.round(data[idx + 3] * 0.72);
+                  }
+                }
+              }
+            }
+
             ctx.putImageData(imageData, 0, 0);
             if (!normalize) {
               resolve({ src: canvas.toDataURL("image/png") });
@@ -1074,50 +1324,26 @@
             const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const d = id.data;
             const base = parseColorToRgb(color);
-
-            // Measure luminance range on visible pixels so we can normalize shading.
-            let minLum = 1;
-            let maxLum = 0;
-            for (let i = 0; i < d.length; i += 4) {
-              if (d[i + 3] === 0) continue;
-              const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-              if (lum < minLum) minLum = lum;
-              if (lum > maxLum) maxLum = lum;
-            }
-            const lumRange = Math.max(0.001, maxLum - minLum);
-            const isVeryLight = (base.r + base.g + base.b) / 3 > 220;
-            const isVeryDark = (base.r + base.g + base.b) / 3 < 35;
+            const avg = (base.r + base.g + base.b) / 3;
+            const isVeryLight = avg >= 240;
 
             for (let i = 0; i < d.length; i += 4) {
               const a = d[i + 3];
               if (a === 0) continue;
-
               const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-              const n = Math.max(0, Math.min(1, (lum - minLum) / lumRange));
-              const eased = Math.pow(n, 0.88);
 
-              // Keep shape detail but avoid muddy colors.
               if (isVeryLight) {
-                // Keep white trim visibly white: bright cool-neutral range with subtle shading only.
-                const tone = Math.round(242 + (eased * 13)); // 242..255
-                d[i] = Math.max(0, Math.min(255, tone - 2));    // R
-                d[i + 1] = Math.max(0, Math.min(255, tone - 1)); // G
-                d[i + 2] = Math.max(0, Math.min(255, tone));    // B
+                const tone = Math.round(236 + (lum * 10));
+                d[i] = Math.max(0, Math.min(255, tone - 1));
+                d[i + 1] = Math.max(0, Math.min(255, tone));
+                d[i + 2] = Math.max(0, Math.min(255, tone));
                 continue;
               }
 
-              let strength = 0.42 + (eased * 0.82);
-              if (isVeryDark) strength = 0.28 + (eased * 0.78);
-
-              const r = Math.round(base.r * strength);
-              const g = Math.round(base.g * strength);
-              const b = Math.round(base.b * strength);
-
-              // Add small neutral highlight from source for glossy depth.
-              const hi = Math.round(16 * Math.pow(eased, 1.4));
-              d[i] = Math.max(0, Math.min(255, r + hi));
-              d[i + 1] = Math.max(0, Math.min(255, g + hi));
-              d[i + 2] = Math.max(0, Math.min(255, b + hi));
+              const shade = 0.32 + (lum * 0.85);
+              d[i] = Math.max(0, Math.min(255, Math.round(base.r * shade)));
+              d[i + 1] = Math.max(0, Math.min(255, Math.round(base.g * shade)));
+              d[i + 2] = Math.max(0, Math.min(255, Math.round(base.b * shade)));
             }
 
             ctx.putImageData(id, 0, 0);
@@ -1130,7 +1356,6 @@
         img.src = TRIM_TEMPLATE_IMG;
       });
     }
-
     async function ensureTrimImage(color) {
       const key = `${TRIM_TINT_VERSION}::${(color || "").toLowerCase()}`;
       if (!key || processedTrimImages[key] || processingTrimImages[key]) return;
@@ -1171,12 +1396,36 @@
             const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const d = id.data;
             const base = parseColorToRgb(color);
+            const avg = (base.r + base.g + base.b) / 3;
+            const isVeryLight = avg >= 240;
+
+            // Normalize luminance range so all part templates tint to the same tone.
+            let minLum = 1;
+            let maxLum = 0;
+            for (let i = 0; i < d.length; i += 4) {
+              if (d[i + 3] === 0) continue;
+              const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+              if (lum < minLum) minLum = lum;
+              if (lum > maxLum) maxLum = lum;
+            }
+            const lumRange = Math.max(0.001, maxLum - minLum);
 
             for (let i = 0; i < d.length; i += 4) {
               const a = d[i + 3];
               if (a === 0) continue;
               const lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-              const shade = 0.34 + (lum * 0.78);
+              const n = Math.max(0, Math.min(1, (lum - minLum) / lumRange));
+              const eased = Math.pow(n, 0.9);
+
+              if (isVeryLight) {
+                const tone = Math.round(236 + (eased * 10));
+                d[i] = Math.max(0, Math.min(255, tone - 1));
+                d[i + 1] = Math.max(0, Math.min(255, tone));
+                d[i + 2] = Math.max(0, Math.min(255, tone));
+                continue;
+              }
+
+              const shade = 0.30 + (eased * 0.88);
               d[i] = Math.max(0, Math.min(255, Math.round(base.r * shade)));
               d[i + 1] = Math.max(0, Math.min(255, Math.round(base.g * shade)));
               d[i + 2] = Math.max(0, Math.min(255, Math.round(base.b * shade)));
@@ -1192,7 +1441,6 @@
         img.src = templateUrl;
       });
     }
-
     async function ensurePartImage(part, templateUrl, color) {
       if (!part || !templateUrl) return;
       const key = `${part}::${(color || "").toLowerCase()}`;
@@ -1218,7 +1466,10 @@
 
     function renderOptions() {
       const key = currentKey();
+      const defaults = getDefaultSelections();
       const list = COLOR_OPTIONS[key];
+      const stockOption = stockOptionForKey(key);
+      const optionsList = Array.isArray(list) && stockOption ? [stockOption, ...list] : list;
       const triggerLike = false;
       optionsHead.textContent = triggerLike ? "SELECT OPTION" : "SELECT COLOR";
       options.innerHTML = "";
@@ -1292,12 +1543,13 @@
         rows.appendChild(base);
 
         Object.entries(state.selections).forEach(([k, v]) => {
-          if (v && v.price > 0) {
-            const row = document.createElement("div");
-            row.className = "line plus";
-            row.innerHTML = `<span style="text-transform:capitalize;">${k}</span><span>+$${v.price.toFixed(2)}</span>`;
-            rows.appendChild(row);
-          }
+          if (!v || v.price <= 0) return;
+          if (k === "dpad" || k === "actionbuttons") return;
+          const row = document.createElement("div");
+          row.className = "line plus";
+          const label = k === "buttons" ? "Button Kit" : k;
+          row.innerHTML = `<span style="text-transform:capitalize;">${label}</span><span>+$${v.price.toFixed(2)}</span>`;
+          rows.appendChild(row);
         });
 
         if (state.smartOptions.dpadButtons === "SMART") {
@@ -1354,7 +1606,7 @@
       if (!triggerLike) {
         const grid = document.createElement("div");
         grid.className = "grid";
-        list.forEach((c) => {
+        optionsList.forEach((c) => {
           const wrap = document.createElement("div");
           wrap.style.display = "flex";
           wrap.style.flexDirection = "column";
@@ -1362,7 +1614,11 @@
           wrap.style.gap = "4px";
 
           const sw = document.createElement("button");
-          sw.className = `sw ${state.selections[key].name === c.name ? "selected" : ""}`;
+          const isStockSelected = !!c.__stock && !!state.stockActive[key];
+          const isSelected = c.__stock
+            ? isStockSelected
+            : (!state.stockActive[key] && state.selections[key].name === c.name);
+          sw.className = `sw ${isSelected ? "selected" : ""}`;
           sw.title = c.name;
           sw.style.background = c.texture
             ? "repeating-linear-gradient(45deg, #111 0px, #111 2px, #222 2px, #222 4px)"
@@ -1385,102 +1641,11 @@
           grid.appendChild(wrap);
         });
         options.appendChild(grid);
-        const partKey = activePartKey();
-        if (partKey && !state.lockedParts[partKey] && partKey !== "buttons") {
-          const adj = state.partAdjust[partKey];
-          const box = document.createElement("div");
-          box.className = "part-adjust";
-          box.innerHTML = `
-            <div class="h2">Move Overlay</div>
-            <div class="r"><label>X</label><input id="partX" type="range" min="-240" max="240" step="1" value="${Math.round(adj.x)}" /><span class="v" id="partXVal">${Math.round(adj.x)}</span></div>
-            <div class="r"><label>Y</label><input id="partY" type="range" min="-240" max="240" step="1" value="${Math.round(adj.y)}" /><span class="v" id="partYVal">${Math.round(adj.y)}</span></div>
-            <div class="r"><label>S</label><input id="partS" type="range" min="0.1" max="2" step="0.01" value="${adj.scale.toFixed(2)}" /><span class="v" id="partSVal">${adj.scale.toFixed(2)}</span></div>
-            <button id="savePartLoc" type="button" class="to selected" style="margin-top:4px;min-width:120px;">Save Location</button>
-          `;
-          options.appendChild(box);
-          const partX = box.querySelector("#partX");
-          const partY = box.querySelector("#partY");
-          const partS = box.querySelector("#partS");
-          const partXVal = box.querySelector("#partXVal");
-          const partYVal = box.querySelector("#partYVal");
-          const partSVal = box.querySelector("#partSVal");
-          const savePartLoc = box.querySelector("#savePartLoc");
-          partX.oninput = () => {
-            state.partAdjust[partKey].x = Number(partX.value);
-            partXVal.textContent = `${Math.round(state.partAdjust[partKey].x)}`;
-            savePartAdjust();
-            renderPreview();
-          };
-          partY.oninput = () => {
-            state.partAdjust[partKey].y = Number(partY.value);
-            partYVal.textContent = `${Math.round(state.partAdjust[partKey].y)}`;
-            savePartAdjust();
-            renderPreview();
-          };
-          partS.oninput = () => {
-            state.partAdjust[partKey].scale = Number(partS.value);
-            partSVal.textContent = state.partAdjust[partKey].scale.toFixed(2);
-            savePartAdjust();
-            renderPreview();
-          };
-          savePartLoc.onclick = () => {
-            savePartAdjust();
-            savePartLoc.textContent = "Saved";
-            setTimeout(() => { savePartLoc.textContent = "Save Location"; }, 900);
-          };
-        } else if (partKey === "buttons") {
-          const buttonsLocked = !!state.lockedParts.btn1 && !!state.lockedParts.btn2 && !!state.lockedParts.btn3 && !!state.lockedParts.btn4;
-          const box = document.createElement("div");
-          box.className = "part-adjust";
-          if (buttonsLocked) {
-            box.innerHTML = `
-              <div class="h2">Buttons Locked</div>
-              <button id="saveButtonsLoc" type="button" class="to selected" style="margin-top:4px;min-width:160px;">Save Buttons Location</button>
-            `;
-            options.appendChild(box);
-            const saveButtonsLoc = box.querySelector("#saveButtonsLoc");
-            saveButtonsLoc.onclick = () => {
-              savePartAdjust();
-              saveButtonsLoc.textContent = "Saved";
-              setTimeout(() => { saveButtonsLoc.textContent = "Save Buttons Location"; }, 900);
-            };
-          } else {
-            const currentSize = state.partAdjust.btn1.scale;
-            box.innerHTML = `
-              <div class="h2">Buttons: Drag + Size</div>
-              <div class="r"><label>S</label><input id="buttonsScale" type="range" min="0.1" max="2" step="0.01" value="${currentSize.toFixed(2)}" /><span class="v" id="buttonsScaleVal">${currentSize.toFixed(2)}</span></div>
-              <button id="saveButtonsLoc" type="button" class="to selected" style="margin-top:4px;min-width:160px;">Save Buttons Location</button>
-            `;
-            options.appendChild(box);
-            const sizeInput = box.querySelector("#buttonsScale");
-            const sizeVal = box.querySelector("#buttonsScaleVal");
-            const saveButtonsLoc = box.querySelector("#saveButtonsLoc");
-            sizeInput.oninput = () => {
-              const s = Number(sizeInput.value);
-              state.partAdjust.btn1.scale = s;
-              state.partAdjust.btn2.scale = s;
-              state.partAdjust.btn3.scale = s;
-              state.partAdjust.btn4.scale = s;
-              sizeVal.textContent = s.toFixed(2);
-              savePartAdjust();
-              renderPreview();
-            };
-            saveButtonsLoc.onclick = () => {
-              savePartAdjust();
-              saveButtonsLoc.textContent = "Saved";
-              setTimeout(() => { saveButtonsLoc.textContent = "Save Buttons Location"; }, 900);
-            };
-          }
-        } else if (partKey && state.lockedParts[partKey]) {
-          const lockMsg = document.createElement("div");
-          lockMsg.className = "part-adjust";
-          lockMsg.innerHTML = `<div class="h2">Overlay Locked</div>`;
-          options.appendChild(lockMsg);
-        }
+
       } else {
         const tr = document.createElement("div");
         tr.className = "trig";
-        list.forEach((c) => {
+        optionsList.forEach((c) => {
           const b = document.createElement("button");
           b.className = `to ${state.selections[key].name === c.name ? "selected" : ""}`;
           b.innerHTML = `<i style="background:${c.hex}"></i><span>${c.label || c.name}</span>${c.price > 0 ? `<b>+$${c.price}</b>` : ""}`;
@@ -1519,7 +1684,10 @@
       const whiteBackScale = (!isFront && selectedBackplate && selectedBackplate.name === "White")
         ? BACK_WHITE_SCALE_BOOST
         : 1;
-      const viewScale = isFront ? FRONT_VIEW_SCALE : (BACK_VIEW_SCALE * whiteBackScale);
+      const whiteFrontScale = (isFront && (state.selections.faceplate?.name === "White" || state.stockActive.faceplate))
+        ? FRONT_WHITE_SCALE_BOOST
+        : 1;
+      const viewScale = isFront ? (FRONT_VIEW_SCALE * whiteFrontScale) : (BACK_VIEW_SCALE * whiteBackScale);
       const viewY = isFront ? FRONT_VIEW_Y : BACK_VIEW_Y;
 
       if (controllerImg.dataset.src !== src) {
@@ -1543,8 +1711,10 @@
       trim.style.display = isFront ? "block" : "none";
 
       const showImageTints = !fallbackVisible && USE_IMAGE_TINTS;
-      if (isFront) ensureTrimImage(tr);
-      if (isFront) {
+      const showTrimOverlay = isFront && !state.stockActive.trim;
+      const showButtonKitOverlays = isFront && !state.stockActive.buttons;
+      if (showTrimOverlay) ensureTrimImage(tr);
+      if (showButtonKitOverlays) {
         ensurePartImage("btn", BUTTONS_IMG, btnColor);
         ensurePartImage("dpad", DPAD_IMG, dpadColor);
         ensurePartImage("actionbuttons", ACTION_BUTTONS_IMG, actionColor);
@@ -1552,19 +1722,27 @@
       }
 
       controllerImg.style.display = fallbackVisible ? "none" : "block";
-      controllerImg.style.transform = `scale(${viewScale})`;
+      const whiteFrontOffsetX = (isFront && (state.selections.faceplate?.name === "White" || state.stockActive.faceplate)) ? FRONT_WHITE_OFFSET_X : 0;
+      const whiteFrontOffsetY = (isFront && (state.selections.faceplate?.name === "White" || state.stockActive.faceplate)) ? FRONT_WHITE_OFFSET_Y : 0;
+      controllerImg.style.transform = `translate(${whiteFrontOffsetX}px, ${whiteFrontOffsetY}px) scale(${viewScale})`;
       controllerImg.style.transformOrigin = `center ${viewY}`;
       const isFaceBlack = isFront && state.selections.faceplate && state.selections.faceplate.name === "Black";
       controllerImg.style.filter = isFaceBlack ? "brightness(0.82) contrast(1.06)" : "none";
       trimAreaTint.style.display = "none";
-      trimPartOverlay.style.display = !fallbackVisible && isFront ? "block" : "none";
-      trimPartOverlay.style.transform = `translate(${state.trimAdjust.x}px, ${state.trimAdjust.y}px) scale(${state.trimAdjust.scale})`;
+      trimPartOverlay.style.display = !fallbackVisible && showTrimOverlay ? "block" : "none";
+      const activeTrimAdjust = getActiveTrimAdjust();
+      const trimLengthScale = useStockAlignment() ? TRIM_LENGTH_SCALE_STOCK : TRIM_LENGTH_SCALE_NORMAL;
+      trimPartOverlay.style.transform = `translate(${activeTrimAdjust.x}px, ${activeTrimAdjust.y}px) scale(${activeTrimAdjust.scale}) scaleY(${trimLengthScale})`;
+      trimPartOverlay.style.transformOrigin = "center top";
       trimPartOverlay.style.pointerEvents = "none";
       trimPartOverlay.style.cursor = "default";
-      if (isFront) {
+      if (showTrimOverlay) {
         const trimKey = `${TRIM_TINT_VERSION}::${(tr || "").toLowerCase()}`;
-        trimPartOverlay.src = processedTrimImages[trimKey] || TRIM_TEMPLATE_IMG;
+        const trimReady = !!processedTrimImages[trimKey];
+        trimPartOverlay.style.visibility = trimReady ? "visible" : "hidden";
+        trimPartOverlay.src = trimReady ? processedTrimImages[trimKey] : "";
       } else {
+        trimPartOverlay.style.visibility = "hidden";
         trimPartOverlay.removeAttribute("src");
       }
 
@@ -1579,17 +1757,19 @@
       ];
       const activeKey = activePartKey();
       partMap.forEach((p) => {
-        const adj = state.partAdjust[p.key];
+        const activePartAdjust = getActivePartAdjust();
+        const adj = activePartAdjust[p.key];
         const imgKey = `${p.cacheKey}::${(p.color || "").toLowerCase()}`;
-        p.el.style.display = !fallbackVisible && isFront && p.template ? "block" : "none";
+        const partReady = !!processedPartImages[imgKey];
+        p.el.style.display = !fallbackVisible && showButtonKitOverlays && p.template && partReady ? "block" : "none";
         p.el.style.transform = `translate(${adj.x}px, ${adj.y}px) scale(${adj.scale})`;
-        const isLocked = !!state.lockedParts[p.key];
-        const isActive = activeKey === p.key || (activeKey === "buttons" && p.key.startsWith("btn"));
-        const forceLocked = p.key === "dpad" || p.key === "actionbuttons" || p.key === "actionbuttons2";
-        p.el.style.pointerEvents = forceLocked ? "none" : (!fallbackVisible && isFront && isActive && !isLocked ? "auto" : "none");
-        p.el.style.cursor = forceLocked ? "default" : (isActive && !isLocked ? "move" : "default");
-        if (isFront && p.template) {
-          p.el.src = processedPartImages[imgKey] || p.template;
+        const isLocked = true;
+        const isActive = false;
+        const forceLocked = true;
+        p.el.style.pointerEvents = "none";
+        p.el.style.cursor = "default";
+        if (showButtonKitOverlays && p.template && partReady) {
+          p.el.src = processedPartImages[imgKey];
         } else {
           p.el.removeAttribute("src");
         }
@@ -1632,12 +1812,13 @@
       priceRows.appendChild(base);
 
       Object.entries(state.selections).forEach(([k, v]) => {
-        if (v.price > 0) {
-          const row = document.createElement("div");
-          row.className = "line plus";
-          row.innerHTML = `<span style="text-transform:capitalize;">${k}</span><span>+$${v.price.toFixed(2)}</span>`;
-          priceRows.appendChild(row);
-        }
+        if (!v || v.price <= 0) return;
+        if (k === "dpad" || k === "actionbuttons") return;
+        const row = document.createElement("div");
+        row.className = "line plus";
+        const label = k === "buttons" ? "Button Kit" : k;
+        row.innerHTML = `<span style="text-transform:capitalize;">${label}</span><span>+$${v.price.toFixed(2)}</span>`;
+        priceRows.appendChild(row);
       });
 
       if (state.smartOptions.dpadButtons === "SMART") {
@@ -1658,15 +1839,27 @@
 
     function selectOption(option) {
       const key = currentKey();
-      state.selections[key] = option;
-      if (key === "faceplate" && option.image) {
-        state.frontImage = option.image;
+      const defaults = getDefaultSelections();
+      const chosen = option && option.__stock ? defaults[key] : option;
+      if (state.stockActive[key] !== undefined) {
+        state.stockActive[key] = !!(option && option.__stock);
+      }
+
+      if (key === "buttons") {
+        syncButtonKitSelections(option && option.__stock ? defaults.buttons : chosen);
+      } else {
+        state.selections[key] = chosen;
+      }
+      if (key === "faceplate" && chosen && chosen.image) {
+        state.frontImage = chosen.image;
       }
       state.view = state.activeSection === 2 ? "back" : "front";
       render();
     }
 
     function render() {
+      syncButtonKitSelections(state.selections.buttons);
+      normalizeStockFlags();
       renderTabs();
       renderOptions();
       renderPreview();
@@ -1695,17 +1888,66 @@
       render();
     };
     resetMain.onclick = resetAllConfig;
+    function overlayElForKey(partKey) {
+      if (partKey === "btn1") return button1Overlay;
+      if (partKey === "btn2") return button2Overlay;
+      if (partKey === "btn3") return button3Overlay;
+      if (partKey === "btn4") return button4Overlay;
+      return null;
+    }
+
+    function nearestButtonKey(clientX, clientY) {
+      let bestKey = "";
+      let bestDistSq = Infinity;
+      BUTTON_KEYS.forEach((k) => {
+        const el = overlayElForKey(k);
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + (rect.width / 2);
+        const cy = rect.top + (rect.height / 2);
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const d2 = (dx * dx) + (dy * dy);
+        if (d2 < bestDistSq) {
+          bestDistSq = d2;
+          bestKey = k;
+        }
+      });
+
+      return bestKey;
+    }
+    function isButtonGrabHit(e, partKey) {
+      if (!partKey || !partKey.startsWith("btn")) return true;
+      const hitEl = overlayElForKey(partKey) || e.currentTarget;
+      const rect = hitEl.getBoundingClientRect();
+      const cx = rect.left + (rect.width / 2);
+      const cy = rect.top + (rect.height / 2);
+      const activePartAdjust = getActivePartAdjust();
+      const adj = activePartAdjust[partKey] || { scale: 1 };
+      const radius = Math.max(8, BUTTON_GRAB_RADIUS_BASE * Number(adj.scale || 1));
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      return (dx * dx + dy * dy) <= (radius * radius);
+    }
     function startPartDrag(e, partKey) {
+      return;
       const key = currentKey();
-      const keyMatches = key === partKey || (key === "buttons" && partKey.startsWith("btn"));
-      if (partKey === "dpad" || partKey === "actionbuttons" || partKey === "actionbuttons2") return;
-      if (state.view !== "front" || !keyMatches || state.lockedParts[partKey]) return;
+      let targetKey = partKey;
+      if (key === "buttons") {
+        const nearest = nearestButtonKey(e.clientX, e.clientY);
+        if (nearest) targetKey = nearest;
+      }
+      const keyMatches = key === targetKey || (key === "buttons" && (targetKey.startsWith("btn") || targetKey === "dpad" || targetKey === "actionbuttons" || targetKey === "actionbuttons2"));
+      const allowStockButtonEdit = key === "buttons" && (targetKey.startsWith("btn") || targetKey === "dpad" || targetKey === "actionbuttons" || targetKey === "actionbuttons2");
+      if (state.view !== "front" || !keyMatches || (!allowStockButtonEdit && state.lockedParts[targetKey])) return;
+      if (!isButtonGrabHit(e, targetKey)) return;
       partDrag.active = true;
-      partDrag.part = partKey;
+      partDrag.part = targetKey;
       partDrag.startX = e.clientX;
       partDrag.startY = e.clientY;
-      partDrag.baseX = state.partAdjust[partKey].x;
-      partDrag.baseY = state.partAdjust[partKey].y;
+      const activePartAdjust = getActivePartAdjust();
+      partDrag.baseX = activePartAdjust[targetKey].x;
+      partDrag.baseY = activePartAdjust[targetKey].y;
       e.target.setPointerCapture(e.pointerId);
       e.preventDefault();
     }
@@ -1713,18 +1955,19 @@
     function movePartDrag(e) {
       if (!partDrag.active || !partDrag.part) return;
       const partKey = partDrag.part;
-      state.partAdjust[partKey].x = partDrag.baseX + (e.clientX - partDrag.startX);
-      state.partAdjust[partKey].y = partDrag.baseY + (e.clientY - partDrag.startY);
+      const activePartAdjust = getActivePartAdjust();
+      activePartAdjust[partKey].x = partDrag.baseX + (e.clientX - partDrag.startX);
+      activePartAdjust[partKey].y = partDrag.baseY + (e.clientY - partDrag.startY);
       savePartAdjust();
       renderPreview();
       const partX = document.getElementById("partX");
       const partY = document.getElementById("partY");
       const partXVal = document.getElementById("partXVal");
       const partYVal = document.getElementById("partYVal");
-      if (partX) partX.value = String(Math.round(state.partAdjust[partKey].x));
-      if (partY) partY.value = String(Math.round(state.partAdjust[partKey].y));
-      if (partXVal) partXVal.textContent = `${Math.round(state.partAdjust[partKey].x)}`;
-      if (partYVal) partYVal.textContent = `${Math.round(state.partAdjust[partKey].y)}`;
+      if (partX) partX.value = String(Math.round(activePartAdjust[partKey].x));
+      if (partY) partY.value = String(Math.round(activePartAdjust[partKey].y));
+      if (partXVal) partXVal.textContent = `${Math.round(activePartAdjust[partKey].x)}`;
+      if (partYVal) partYVal.textContent = `${Math.round(activePartAdjust[partKey].y)}`;
     }
 
     function endPartDrag() {
