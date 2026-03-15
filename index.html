@@ -477,7 +477,19 @@
       trimAdjust: { x: 0, y: 46, scale: 1 },
       partAdjust: {
         btn1: { x: 189, y: -147, scale: 0.38 },
-        btn2: { x: 145, y: -103, scale: 0.38 },
+        btn2: { x: 150, y: -103, scale: 0.38 },
+        btn3: { x: 235, y: -102, scale: 0.38 },
+        btn4: { x: 190, y: -58, scale: 0.38 },
+        dpad: { x: -191, y: -102, scale: 0.42 },
+        actionbuttons: { x: -156, y: -153, scale: 0.59 },
+        actionbuttons2: { x: 156, y: -149, scale: 0.59 }
+      }
+    };
+    const STOCK_INLINE_ADJUSTMENTS = {
+      trimAdjust: { x: 0, y: 46, scale: 1 },
+      partAdjust: {
+        btn1: { x: 189, y: -147, scale: 0.38 },
+        btn2: { x: 150, y: -103, scale: 0.38 },
         btn3: { x: 235, y: -102, scale: 0.38 },
         btn4: { x: 190, y: -58, scale: 0.38 },
         dpad: { x: -191, y: -102, scale: 0.42 },
@@ -711,38 +723,7 @@
       return Math.max(min, Math.min(max, n));
     }
     function savePartAdjust() {
-      try {
-        const payload = {
-          normalTrimAdjust: {
-            x: Number(state.trimAdjust.x),
-            y: Number(state.trimAdjust.y),
-            scale: Number(state.trimAdjust.scale)
-          },
-          normalPartAdjust: JSON.parse(JSON.stringify(state.partAdjust)),
-          stockTrimAdjust: {
-            x: Number(state.stockTrimAdjust.x),
-            y: Number(state.stockTrimAdjust.y),
-            scale: Number(state.stockTrimAdjust.scale)
-          },
-          stockPartAdjust: JSON.parse(JSON.stringify(state.stockPartAdjust)),
-          trimAdjust: {
-            x: Number(state.trimAdjust.x),
-            y: Number(state.trimAdjust.y),
-            scale: Number(state.trimAdjust.scale)
-          },
-          partAdjust: JSON.parse(JSON.stringify(state.partAdjust))
-        };
-
-        LOCAL_INLINE_ADJUSTMENTS.normalTrimAdjust = JSON.parse(JSON.stringify(payload.normalTrimAdjust));
-        LOCAL_INLINE_ADJUSTMENTS.normalPartAdjust = JSON.parse(JSON.stringify(payload.normalPartAdjust));
-        LOCAL_INLINE_ADJUSTMENTS.stockTrimAdjust = JSON.parse(JSON.stringify(payload.stockTrimAdjust));
-        LOCAL_INLINE_ADJUSTMENTS.stockPartAdjust = JSON.parse(JSON.stringify(payload.stockPartAdjust));
-        LOCAL_INLINE_ADJUSTMENTS.trimAdjust = JSON.parse(JSON.stringify(payload.trimAdjust));
-        LOCAL_INLINE_ADJUSTMENTS.partAdjust = JSON.parse(JSON.stringify(payload.partAdjust));
-        localStorage.setItem(ADJUSTMENTS_INLINE_STORAGE_KEY, JSON.stringify(payload));
-      } catch (e) {
-        // ignore
-      }
+      // Hardcoded adjustments mode: adjustments are fixed in index.html.
     }
 
     function normalizeTrimAdjust(raw) {
@@ -766,139 +747,6 @@
       return out;
     }
 
-
-    function isBaselineDefaultAdjust(trimAdjust, partAdjust) {
-      const trimIsDefault =
-        Math.round(Number(trimAdjust && trimAdjust.x || 0)) === 0 &&
-        Math.round(Number(trimAdjust && trimAdjust.y || 0)) === 0 &&
-        Number(Number(trimAdjust && trimAdjust.scale || 1).toFixed(2)) === 1;
-      if (!trimIsDefault) return false;
-      return Object.keys(DEFAULT_PART_ADJUST).every((k) => {
-        const a = partAdjust && partAdjust[k] ? partAdjust[k] : DEFAULT_PART_ADJUST[k];
-        const b = DEFAULT_PART_ADJUST[k];
-        return Math.round(Number(a.x || 0)) === Math.round(Number(b.x || 0)) &&
-          Math.round(Number(a.y || 0)) === Math.round(Number(b.y || 0)) &&
-          Number(Number(a.scale || 1).toFixed(2)) === Number(Number(b.scale || 1).toFixed(2));
-      });
-    }
-    function parseMaybeJson(raw) {
-      if (typeof raw !== "string") return raw;
-      try {
-        return JSON.parse(raw);
-      } catch (e) {
-        return null;
-      }
-    }
-
-    async function loadAdjustmentsFromJson() {
-      const fallbackNormal = {
-        trimAdjust: normalizeTrimAdjust({ x: 0, y: 0, scale: 1 }),
-        partAdjust: normalizePartAdjust(DEFAULT_PART_ADJUST)
-      };
-
-      const normalizePayload = (payload) => {
-        const legacyTrimPayload = parseMaybeJson(payload && payload.trimAdjust) || parseMaybeJson(payload && payload.ps5_trim_adjust_v1);
-        const legacyPartPayload = parseMaybeJson(payload && payload.partAdjust) || parseMaybeJson(payload && payload.ps5_part_adjust_v1);
-
-        const normalTrimPayload = parseMaybeJson(payload && payload.normalTrimAdjust) || parseMaybeJson(payload && payload.normal && payload.normal.trimAdjust);
-        const normalPartPayload = parseMaybeJson(payload && payload.normalPartAdjust) || parseMaybeJson(payload && payload.normal && payload.normal.partAdjust);
-        const stockTrimPayload = parseMaybeJson(payload && payload.stockTrimAdjust) || parseMaybeJson(payload && payload.stock && payload.stock.trimAdjust);
-        const stockPartPayload = parseMaybeJson(payload && payload.stockPartAdjust) || parseMaybeJson(payload && payload.stock && payload.stock.partAdjust);
-
-        const hasSplit = !!(normalTrimPayload || normalPartPayload || stockTrimPayload || stockPartPayload || (payload && payload.normal) || (payload && payload.stock));
-
-        const legacyTrim = normalizeTrimAdjust(legacyTrimPayload || fallbackNormal.trimAdjust);
-        const legacyPart = normalizePartAdjust(legacyPartPayload || fallbackNormal.partAdjust);
-
-        const normalTrim = hasSplit
-          ? normalizeTrimAdjust(normalTrimPayload || fallbackNormal.trimAdjust)
-          : legacyTrim;
-        const normalPart = hasSplit
-          ? normalizePartAdjust(normalPartPayload || fallbackNormal.partAdjust)
-          : legacyPart;
-
-        const stockTrim = hasSplit
-          ? normalizeTrimAdjust(stockTrimPayload || normalTrim)
-          : legacyTrim;
-        const stockPart = hasSplit
-          ? normalizePartAdjust(stockPartPayload || normalPart)
-          : legacyPart;
-
-        return {
-          trimAdjust: normalTrim,
-          partAdjust: normalPart,
-          stockTrimAdjust: stockTrim,
-          stockPartAdjust: stockPart
-        };
-      };
-
-      try {
-        const localRaw = localStorage.getItem(ADJUSTMENTS_INLINE_STORAGE_KEY);
-        if (localRaw) {
-          const localPayload = JSON.parse(localRaw);
-          return normalizePayload(localPayload);
-        }
-      } catch (e) {
-        // ignore local override parse issues
-      }
-
-      const candidates = [];
-      const push = (u) => {
-        if (u && !candidates.includes(u)) candidates.push(u);
-      };
-
-      push(ADJUSTMENTS_JSON_URL);
-      try { push(new URL(ADJUSTMENTS_JSON_URL, window.location.href).href); } catch (e) {}
-
-      if (window.location.origin && window.location.origin !== "null") {
-        push(`${window.location.origin}/ps5_adjustments.json`);
-        const pathDir = window.location.pathname.replace(/[^/]*$/, "");
-        push(`${window.location.origin}${pathDir}ps5_adjustments.json`);
-      }
-
-      const globalPayload = parseMaybeJson(window.PS5_ADJUSTMENTS_DATA) || window.PS5_ADJUSTMENTS_DATA;
-      if (globalPayload && typeof globalPayload === "object") {
-        return normalizePayload(globalPayload);
-      }
-
-      for (const url of candidates) {
-        try {
-          const response = await fetch(url, { cache: "no-store" });
-          if (!response.ok) continue;
-          const text = await response.text();
-          if (!text || !text.trim()) continue;
-          const payload = JSON.parse(text);
-          return normalizePayload(payload);
-        } catch (e) {
-          // Try next candidate.
-        }
-      }
-
-      if (window.location.protocol === "file:" && LOCAL_INLINE_ADJUSTMENTS) {
-        return normalizePayload(LOCAL_INLINE_ADJUSTMENTS);
-      }
-      if (window.location.protocol === "file:") {
-        try {
-          const xhr = new XMLHttpRequest();
-          xhr.open("GET", ADJUSTMENTS_JSON_URL, false);
-          xhr.send(null);
-          const ok = xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300);
-          if (ok && xhr.responseText) {
-            const payload = JSON.parse(xhr.responseText);
-            return normalizePayload(payload);
-          }
-        } catch (e) {
-          // Keep fallback.
-        }
-      }
-
-      return {
-        trimAdjust: fallbackNormal.trimAdjust,
-        partAdjust: fallbackNormal.partAdjust,
-        stockTrimAdjust: fallbackNormal.trimAdjust,
-        stockPartAdjust: fallbackNormal.partAdjust
-      };
-    }
     function getDefaultSelections() {
       return {
         faceplate: COLOR_OPTIONS.faceplate[0],
@@ -963,7 +811,7 @@
         syncButtonKitSelections(state.selections.buttons);
 
         if (parsed && parsed.stockActive) {
-          ["faceplate","trim","backplate","buttons"].forEach((k) => {
+          ["faceplate", "trim", "backplate", "buttons"].forEach((k) => {
             state.stockActive[k] = !!parsed.stockActive[k];
           });
         }
@@ -993,6 +841,7 @@
         // ignore
       }
     }
+
     function resetAllConfig() {
       state.selections = getDefaultSelections();
       state.smartOptions = { dpadButtons: "STOCK", triggersBumpers: "STOCK" };
@@ -1003,23 +852,20 @@
       state.stockActive = { faceplate: false, trim: false, backplate: false, buttons: false };
       render();
     }
+
     async function initializeApp() {
       localStorage.removeItem("ps5_part_adjust_v1");
       localStorage.removeItem("ps5_trim_adjust_v1");
-      try {
-        const adjustmentState = await loadAdjustmentsFromJson();
-        const baselineNormalTrim = normalizeTrimAdjust(LOCAL_INLINE_ADJUSTMENTS.trimAdjust);
-        const baselineNormalPart = normalizePartAdjust(LOCAL_INLINE_ADJUSTMENTS.partAdjust);
-        state.trimAdjust = baselineNormalTrim;
-        state.partAdjust = baselineNormalPart;
-        state.stockTrimAdjust = adjustmentState.stockTrimAdjust || adjustmentState.trimAdjust || baselineNormalTrim;
-        state.stockPartAdjust = adjustmentState.stockPartAdjust || adjustmentState.partAdjust || baselineNormalPart;
-      } finally {
-        loadConfigState();
-        render();
-        try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
-        if (appRoot) appRoot.classList.add("ready");
-      }
+
+      state.trimAdjust = normalizeTrimAdjust(LOCAL_INLINE_ADJUSTMENTS.trimAdjust);
+      state.partAdjust = normalizePartAdjust(LOCAL_INLINE_ADJUSTMENTS.partAdjust);
+      state.stockTrimAdjust = normalizeTrimAdjust(STOCK_INLINE_ADJUSTMENTS.trimAdjust);
+      state.stockPartAdjust = normalizePartAdjust(STOCK_INLINE_ADJUSTMENTS.partAdjust);
+
+      loadConfigState();
+      render();
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+      if (appRoot) appRoot.classList.add("ready");
     }
     function isStockFaceplateSelected() {
       const defaults = getDefaultSelections();
