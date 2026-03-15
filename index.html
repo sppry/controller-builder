@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SCUF Lab</title>
+  <title>NextGen Designer</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -404,6 +404,7 @@
             <img id="button4Overlay" class="part-overlay" alt="" />
             <img id="dpadOverlay" class="part-overlay" alt="" />
             <img id="actionButtonsOverlay" class="part-overlay" alt="" />
+            <img id="actionButtonsOverlay2" class="part-overlay" alt="" />
             <div id="trimAreaTint" class="trim-area-tint"></div>
             <div class="tint face-tint" id="faceTint"></div>
             <div class="tint shell-tint" id="shellTint"></div>
@@ -465,7 +466,8 @@
     const BACK_CONTENT_WIDTH_RATIO = 0.95;
     const BUTTONS_IMG = "https://i.postimg.cc/pT7vpWJs/buttons-(1)-(1).png";
     const DPAD_IMG = "https://i.postimg.cc/3xDKpDcf/3Aq-M7y4rymdl-Ej-Rw-Xf184RA8ED5.png";
-    const ACTION_BUTTONS_IMG = "https://i.postimg.cc/x1b0Hb4s/3Aq-M7z0Csnm8w3rechx25Gmk9d2.png";
+    const ACTION_BUTTONS_IMG = "https://i.postimg.cc/cHf8XgvQ/action.png";
+    const ACTION_BUTTONS_IMG_2 = "https://i.postimg.cc/9MyqJRDz/action-2.png";
     const ADJUSTMENTS_JSON_URL = "./ps5_adjustments.json";
     const CONFIG_STORAGE_KEY = "ps5_config_state_v1";
     const TRIM_TINT_VERSION = "v5";
@@ -613,7 +615,8 @@
       btn3: { x: 248, y: -6, scale: 0.26 },
       btn4: { x: 176, y: 82, scale: 0.26 },
       dpad: { x: 0, y: 0, scale: 1 },
-      actionbuttons: { x: 0, y: 0, scale: 1 }
+      actionbuttons: { x: 0, y: 0, scale: 1 },
+      actionbuttons2: { x: 0, y: 0, scale: 1 }
     };
 
     const state = {
@@ -621,7 +624,7 @@
       view: "front",
       frontImage: FRONT_IMG,
       trimAdjust: { x: 0, y: 0, scale: 1 },
-      lockedParts: { btn1: true, btn2: true, btn3: true, btn4: true, dpad: true, actionbuttons: true },
+      lockedParts: { btn1: true, btn2: true, btn3: true, btn4: true, dpad: true, actionbuttons: true, actionbuttons2: true },
       partAdjust: JSON.parse(JSON.stringify(DEFAULT_PART_ADJUST)),
       smartOptions: {
         dpadButtons: "STOCK",
@@ -671,6 +674,7 @@
     const button4Overlay = document.getElementById("button4Overlay");
     const dpadOverlay = document.getElementById("dpadOverlay");
     const actionButtonsOverlay = document.getElementById("actionButtonsOverlay");
+    const actionButtonsOverlay2 = document.getElementById("actionButtonsOverlay2");
     const trimAreaTint = document.getElementById("trimAreaTint");
     const faceTint = document.getElementById("faceTint");
     const shellTint = document.getElementById("shellTint");
@@ -1544,6 +1548,7 @@
         ensurePartImage("btn", BUTTONS_IMG, btnColor);
         ensurePartImage("dpad", DPAD_IMG, dpadColor);
         ensurePartImage("actionbuttons", ACTION_BUTTONS_IMG, actionColor);
+        ensurePartImage("actionbuttons2", ACTION_BUTTONS_IMG_2, actionColor);
       }
 
       controllerImg.style.display = fallbackVisible ? "none" : "block";
@@ -1569,7 +1574,8 @@
         { key: "btn3", cacheKey: "btn", el: button3Overlay, color: btnColor, template: BUTTONS_IMG },
         { key: "btn4", cacheKey: "btn", el: button4Overlay, color: btnColor, template: BUTTONS_IMG },
         { key: "dpad", cacheKey: "dpad", el: dpadOverlay, color: dpadColor, template: DPAD_IMG },
-        { key: "actionbuttons", cacheKey: "actionbuttons", el: actionButtonsOverlay, color: actionColor, template: ACTION_BUTTONS_IMG }
+        { key: "actionbuttons", cacheKey: "actionbuttons", el: actionButtonsOverlay, color: actionColor, template: ACTION_BUTTONS_IMG },
+        { key: "actionbuttons2", cacheKey: "actionbuttons2", el: actionButtonsOverlay2, color: actionColor, template: ACTION_BUTTONS_IMG_2 }
       ];
       const activeKey = activePartKey();
       partMap.forEach((p) => {
@@ -1579,7 +1585,7 @@
         p.el.style.transform = `translate(${adj.x}px, ${adj.y}px) scale(${adj.scale})`;
         const isLocked = !!state.lockedParts[p.key];
         const isActive = activeKey === p.key || (activeKey === "buttons" && p.key.startsWith("btn"));
-        const forceLocked = p.key === "dpad" || p.key === "actionbuttons";
+        const forceLocked = p.key === "dpad" || p.key === "actionbuttons" || p.key === "actionbuttons2";
         p.el.style.pointerEvents = forceLocked ? "none" : (!fallbackVisible && isFront && isActive && !isLocked ? "auto" : "none");
         p.el.style.cursor = forceLocked ? "default" : (isActive && !isLocked ? "move" : "default");
         if (isFront && p.template) {
@@ -1692,7 +1698,7 @@
     function startPartDrag(e, partKey) {
       const key = currentKey();
       const keyMatches = key === partKey || (key === "buttons" && partKey.startsWith("btn"));
-      if (partKey === "dpad" || partKey === "actionbuttons") return;
+      if (partKey === "dpad" || partKey === "actionbuttons" || partKey === "actionbuttons2") return;
       if (state.view !== "front" || !keyMatches || state.lockedParts[partKey]) return;
       partDrag.active = true;
       partDrag.part = partKey;
@@ -1732,7 +1738,8 @@
       { el: button3Overlay, key: "btn3" },
       { el: button4Overlay, key: "btn4" },
       { el: dpadOverlay, key: "dpad" },
-      { el: actionButtonsOverlay, key: "actionbuttons" }
+      { el: actionButtonsOverlay, key: "actionbuttons" },
+      { el: actionButtonsOverlay2, key: "actionbuttons2" }
     ].forEach((item) => {
       item.el.addEventListener("pointerdown", (e) => startPartDrag(e, item.key));
       item.el.addEventListener("pointermove", movePartDrag);
